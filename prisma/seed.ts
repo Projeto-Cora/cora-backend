@@ -124,7 +124,7 @@ async function main() {
       {
         module_id: '6e7b8f8e-8f8e-4f8e-8f8e-6e7b8f8e8f8e',
         title: 'Módulo 1',
-        sinopsys:
+        synopsis:
           'Explore o mundo da criatividade e descubra como ela pode transformar sua vida.',
         thumbnail: 'module1.jpg',
         age_group: '5-7',
@@ -133,7 +133,7 @@ async function main() {
       {
         module_id: '7f7b8f8e-8f8e-4f8e-8f8e-7f7b8f8e8f8e',
         title: 'Módulo 2',
-        sinopsys:
+        synopsis:
           'Aprenda técnicas práticas para estimular sua criatividade diariamente.',
         thumbnail: 'module2.jpg',
         age_group: '8-10',
@@ -205,7 +205,7 @@ async function main() {
 
   await prisma.question.create({
     data: {
-      id_question: '0i7b8f8e-8f8e-4f8e-8f8e-0i7b8f8e8f8e',
+      question_id: '0i7b8f8e-8f8e-4f8e-8f8e-0i7b8f8e8f8e',
       title: 'Pergunta sobre Módulo 1',
       text: 'Quando começar a falar sobre sexualidade com meu filho(a)?',
       keywords: ['sexualidade', 'filho', 'conversa'],
@@ -215,7 +215,7 @@ async function main() {
 
   const question = await prisma.question.findUnique({
     where: {
-      id_question: '0i7b8f8e-8f8e-4f8e-8f8e-0i7b8f8e8f8e',
+      question_id: '0i7b8f8e-8f8e-4f8e-8f8e-0i7b8f8e8f8e',
     },
   });
 
@@ -230,14 +230,14 @@ async function main() {
         text: 'Você pode começar a falar sobre sexualidade desde cedo, adaptando a conversa à idade da criança.',
         is_anonymous: false,
         user_id: user2.user_id,
-        question_id: question.id_question,
+        question_id: question.question_id,
       },
       {
         reply_id: '2k7b8f8e-8f8e-4f8e-8f8e-2k7b8f8e8f8e',
         text: 'É importante criar um ambiente aberto e seguro para que seu filho(a) se sinta confortável para fazer perguntas.',
         is_anonymous: true,
         user_id: user3.user_id,
-        question_id: question.id_question,
+        question_id: question.question_id,
       },
     ],
   });

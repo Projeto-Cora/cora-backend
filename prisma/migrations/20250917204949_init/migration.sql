@@ -1,12 +1,3 @@
-/*
-  Warnings:
-
-  - You are about to drop the `users` table. If the table is not empty, all the data it contains will be lost.
-
-*/
--- DropTable
-DROP TABLE "public"."users";
-
 -- CreateTable
 CREATE TABLE "public"."User" (
     "user_id" TEXT NOT NULL,
@@ -45,7 +36,7 @@ CREATE TABLE "public"."Reply" (
 
 -- CreateTable
 CREATE TABLE "public"."Question" (
-    "id_question" TEXT NOT NULL,
+    "question_id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "text" TEXT NOT NULL,
     "creation_date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -53,14 +44,14 @@ CREATE TABLE "public"."Question" (
     "is_anonymous" BOOLEAN NOT NULL DEFAULT false,
     "user_id" TEXT NOT NULL,
 
-    CONSTRAINT "Question_pkey" PRIMARY KEY ("id_question")
+    CONSTRAINT "Question_pkey" PRIMARY KEY ("question_id")
 );
 
 -- CreateTable
 CREATE TABLE "public"."Module" (
     "module_id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
-    "sinopsys" TEXT NOT NULL,
+    "synopsis" TEXT NOT NULL,
     "thumbnail" TEXT NOT NULL,
     "creation_date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "views" INTEGER NOT NULL DEFAULT 0,
@@ -103,7 +94,7 @@ ALTER TABLE "public"."Child" ADD CONSTRAINT "Child_parent_id_fkey" FOREIGN KEY (
 ALTER TABLE "public"."Reply" ADD CONSTRAINT "Reply_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."User"("user_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Reply" ADD CONSTRAINT "Reply_question_id_fkey" FOREIGN KEY ("question_id") REFERENCES "public"."Question"("id_question") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."Reply" ADD CONSTRAINT "Reply_question_id_fkey" FOREIGN KEY ("question_id") REFERENCES "public"."Question"("question_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."Question" ADD CONSTRAINT "Question_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."User"("user_id") ON DELETE RESTRICT ON UPDATE CASCADE;

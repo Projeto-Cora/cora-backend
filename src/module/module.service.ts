@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 interface RandomModuleResult {
   module_id: string;
   title: string;
-  sinopsys: string;
+  synopsis: string;
   thumbnail: string;
   age_group: string;
 }
@@ -30,7 +30,7 @@ export class ModuleService {
     const module = await this.prisma.module.create({
       data: {
         title: createModuleDto.title,
-        sinopsys: createModuleDto.sinopsys,
+        synopsis: createModuleDto.synopsis,
         thumbnail: createModuleDto.thumbnail,
         age_group: createModuleDto.age_group,
         user_id: userId,
@@ -79,7 +79,7 @@ export class ModuleService {
     return modules.map((module) => ({
       module_id: module.module_id,
       title: module.title,
-      sinopsys: module.sinopsys,
+      synopsis: module.synopsis,
       thumbnail: module.thumbnail,
       age_group: module.age_group,
     }));
@@ -97,7 +97,7 @@ export class ModuleService {
     return modules.map((module) => ({
       module_id: module.module_id,
       title: module.title,
-      sinopsys: module.sinopsys,
+      synopsis: module.synopsis,
       thumbnail: module.thumbnail,
       age_group: module.age_group,
     }));
@@ -105,7 +105,7 @@ export class ModuleService {
 
   async getRecommendedModules(): Promise<ModuleCardResponseDto[]> {
     const modules = await this.prisma.$queryRaw<RandomModuleResult[]>`
-      SELECT module_id, title, sinopsys, thumbnail, age_group 
+      SELECT module_id, title, synopsis, thumbnail, age_group 
       FROM "Module" 
       ORDER BY RANDOM()
     `;
@@ -117,7 +117,7 @@ export class ModuleService {
     return modules.map((module) => ({
       module_id: module.module_id,
       title: module.title,
-      sinopsys: module.sinopsys,
+      synopsis: module.synopsis,
       thumbnail: module.thumbnail,
       age_group: module.age_group,
     }));
@@ -130,14 +130,14 @@ export class ModuleService {
       where: {
         OR: [
           { title: { contains: keyword, mode: 'insensitive' } },
-          { sinopsys: { contains: keyword, mode: 'insensitive' } },
+          { synopsis: { contains: keyword, mode: 'insensitive' } },
         ],
       },
       select: {
         module_id: true,
         title: true,
         thumbnail: true,
-        sinopsys: true,
+        synopsis: true,
         age_group: true,
       },
     });
@@ -145,7 +145,7 @@ export class ModuleService {
     const moduleCards: ModuleCardResponseDto[] = modulos.map((module) => ({
       module_id: module.module_id,
       title: module.title,
-      sinopsys: module.sinopsys,
+      synopsis: module.synopsis,
       thumbnail: module.thumbnail,
       age_group: module.age_group,
     }));
