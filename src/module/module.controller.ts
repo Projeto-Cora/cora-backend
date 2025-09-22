@@ -7,9 +7,14 @@ import {
   Param,
   Query,
   UnauthorizedException,
+  Put,
 } from '@nestjs/common';
 import { ModuleService } from './module.service';
-import { ModuleCardResponseDto, ModuleResponseDto } from './dtos/module.dto';
+import {
+  ModuleCardResponseDto,
+  ModuleFullResponseDto,
+  ModuleResponseDto,
+} from './dtos/module.dto';
 
 @Controller('module')
 export class ModuleController {
@@ -54,5 +59,14 @@ export class ModuleController {
     @Query('keyword') keyword: string,
   ): Promise<ModuleCardResponseDto[]> {
     return await this.moduleService.searchModuleByKeyword(keyword);
+  }
+
+  @Put('/id/:id')
+  async updateModule(
+    @Param('id') id: string,
+    @Body() updateModuleDto: Partial<Omit<ModuleFullResponseDto, 'module_id'>>,
+    @Headers('x-user-id') userId: string,
+  ): Promise<ModuleFullResponseDto> {
+    return await this.moduleService.updateModule(id, updateModuleDto, userId);
   }
 }
