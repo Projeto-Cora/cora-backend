@@ -105,7 +105,7 @@ describe('ModuleService', () => {
         {
           module_id: mockModule.module_id,
           title: mockModule.title,
-          sinopsys: mockModule.sinopsys,
+          synopsis: mockModule.synopsis,
           thumbnail: mockModule.thumbnail,
           age_group: mockModule.age_group,
         },
@@ -121,14 +121,14 @@ describe('ModuleService', () => {
         where: {
           OR: [
             { title: { contains: keyword, mode: 'insensitive' } },
-            { sinopsys: { contains: keyword, mode: 'insensitive' } },
+            { synopsis: { contains: keyword, mode: 'insensitive' } },
           ],
         },
         select: {
           module_id: true,
           title: true,
           thumbnail: true,
-          sinopsys: true,
+          synopsis: true,
           age_group: true,
         },
       });
@@ -145,14 +145,14 @@ describe('ModuleService', () => {
         where: {
           OR: [
             { title: { contains: keyword, mode: 'insensitive' } },
-            { sinopsys: { contains: keyword, mode: 'insensitive' } },
+            { synopsis: { contains: keyword, mode: 'insensitive' } },
           ],
         },
         select: {
           module_id: true,
           title: true,
           thumbnail: true,
-          sinopsys: true,
+          synopsis: true,
           age_group: true,
         },
       });

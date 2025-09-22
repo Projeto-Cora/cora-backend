@@ -5,7 +5,7 @@ import { mockContentResponseDto } from '../content/content.mock';
 export const mockModule: Module = {
   module_id: 'test-module-id',
   title: 'Module Title',
-  sinopsys: 'This is a test module synopsis.',
+  synopsis: 'This is a test module synopsis.',
   thumbnail: 'image.jpg',
   age_group: '5-7',
   views: 4,
@@ -17,7 +17,7 @@ export const mockModule: Module = {
 export const mockModule2: Module = {
   module_id: 'test-module-id-2',
   title: 'Module Title 2',
-  sinopsys: 'This is another test module synopsis.',
+  synopsis: 'This is another test module synopsis.',
   thumbnail: 'another-image.jpg',
   age_group: '8-10',
   views: 2,
@@ -29,7 +29,7 @@ export const mockModule2: Module = {
 export const mockCreateModuleDto: ModuleCardResponseDto = {
   module_id: 'test-module-id',
   title: 'Module Title',
-  sinopsys: 'This is a test module synopsis.',
+  synopsis: 'This is a test module synopsis.',
   thumbnail: 'image.jpg',
   age_group: '5-7',
 };
@@ -47,7 +47,7 @@ export const mockModuleResponseNoContentsDto: ModuleResponseDto = {
 export const mockModuleCardResponseDto = {
   module_id: 'test-module-id',
   title: 'Module Title',
-  sinopsys: 'This is a test module synopsis.',
+  synopsis: 'This is a test module synopsis.',
   thumbnail: 'image.jpg',
   age_group: '5-7',
 };
@@ -56,14 +56,14 @@ export const mockModulesCardResponseDto = [
   {
     module_id: 'test-module-id',
     title: 'Module Title',
-    sinopsys: 'This is a test module synopsis.',
+    synopsis: 'This is a test module synopsis.',
     thumbnail: 'image.jpg',
     age_group: '5-7',
   },
   {
     module_id: 'test-module-id-2',
     title: 'Module Title 2',
-    sinopsys: 'This is another test module synopsis.',
+    synopsis: 'This is another test module synopsis.',
     thumbnail: 'another-image.jpg',
     age_group: '8-10',
   },

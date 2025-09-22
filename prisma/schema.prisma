@@ -48,11 +48,11 @@ model Reply {
   user_id      String
   user         User    @relation(fields: [user_id], references: [user_id])
   question_id  String
-  question     Question @relation(fields: [question_id], references: [id_question])
+  question     Question @relation(fields: [question_id], references: [question_id])
 }
 
 model Question {
-  id_question   String   @id @default(uuid())
+  question_id   String   @id @default(uuid())
   title         String
   text          String
   creation_date DateTime @default(now())
@@ -68,7 +68,7 @@ model Question {
 model Module {
   module_id     String   @id @default(uuid())
   title         String
-  sinopsys      String
+  synopsis      String
   thumbnail     String
   creation_date DateTime @default(now())
   views         Int      @default(0)

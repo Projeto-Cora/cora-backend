@@ -20,7 +20,7 @@ export class ModuleCardResponseDto {
 
   @IsString()
   @IsNotEmpty()
-  sinopsys: string;
+  synopsis: string;
 
   @IsString()
   @IsNotEmpty()
