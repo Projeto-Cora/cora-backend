@@ -3,6 +3,7 @@ import {
   BadRequestException,
   UnauthorizedException,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ModuleCardResponseDto,
@@ -235,5 +236,37 @@ export class ModuleService {
         module_id: content.module_id,
       })),
     };
+  }
+
+  async softDeleteModule(
+    moduleId: string,
+    userId: string,
+  ): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { user_id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException(`User with ID ${userId} does not exist`);
+    }
+
+    if (user.user_type !== 'admin') {
+      throw new ForbiddenException(`User ${userId} is not authorized`);
+    }
+
+    const existingModule = await this.prisma.module.findUnique({
+      where: { module_id: moduleId },
+    });
+
+    if (!existingModule) {
+      throw new NotFoundException(`Module with ID ${moduleId} not found`);
+    }
+
+    await this.prisma.module.update({
+      where: { module_id: moduleId },
+      data: { deletedAt: new Date() },
+    });
+
+    return { message: `Module with ID ${moduleId} successfully soft deleted` };
   }
 }

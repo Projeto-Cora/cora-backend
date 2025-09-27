@@ -8,6 +8,7 @@ import {
   Query,
   UnauthorizedException,
   Put,
+  Patch,
 } from '@nestjs/common';
 import { ModuleService } from './module.service';
 import {
@@ -68,5 +69,13 @@ export class ModuleController {
     @Headers('x-user-id') userId: string,
   ): Promise<ModuleFullResponseDto> {
     return await this.moduleService.updateModule(id, updateModuleDto, userId);
+  }
+
+  @Patch('/id/:id/delete')
+  async softDeleteModule(
+    @Param('id') id: string,
+    @Headers('x-user-id') userId: string,
+  ): Promise<{ message: string }> {
+    return await this.moduleService.softDeleteModule(id, userId);
   }
 }

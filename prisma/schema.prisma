@@ -74,6 +74,7 @@ model Module {
   views         Int      @default(0)
   age_group     String
   updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
 
   // Relações
   user_id  String
