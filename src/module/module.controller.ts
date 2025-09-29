@@ -10,7 +10,10 @@ import {
 } from '@nestjs/common';
 import { ModuleService } from './module.service';
 import { ModuleCardResponseDto, ModuleResponseDto } from './dtos/module.dto';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Module')
+@ApiBearerAuth('Authorization')
 @Controller('module')
 export class ModuleController {
   constructor(private readonly moduleService: ModuleService) {}
