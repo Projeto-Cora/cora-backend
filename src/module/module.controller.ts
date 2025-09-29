@@ -10,7 +10,7 @@ import {
   ParseArrayPipe,
 } from '@nestjs/common';
 import { ModuleService } from './module.service';
-import { ModuleCardResponseDto, ModuleResponseDto } from './dtos/module.dto';
+import { ModuleCardResponseDto, ModuleResponseDto, ModuleResponseDto2 } from './dtos/module.dto';
 
 @Controller('module')
 export class ModuleController {
@@ -78,5 +78,9 @@ export class ModuleController {
     ageGroups?: string[],
   ): Promise<ModuleCardResponseDto[]> {
     return await this.moduleService.searchModuleByKeyword(keyword, ageGroups);
+  }
+  @Get('/id2/:id')
+  async getModuleById2(@Param('id') id: string): Promise<ModuleResponseDto2> {
+    return await this.moduleService.getModuleById2(id);
   }
 }

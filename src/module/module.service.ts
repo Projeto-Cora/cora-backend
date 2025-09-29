@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { ModuleCardResponseDto, ModuleResponseDto } from './dtos/module.dto';
+import { ModuleCardResponseDto, ModuleResponseDto, ModuleResponseDto2 } from './dtos/module.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
@@ -187,5 +187,39 @@ export class ModuleService {
       age_group: module.age_group,
     }));
     return moduleCards;
+  }
+  // This is the getModule using id function for editing modules (Us17)
+  async getModuleById2(moduleId: string): Promise<ModuleResponseDto2> {
+    const module = await this.prisma.module.findUnique({
+      where: { module_id: moduleId },
+    });
+
+    if (!module) {
+      throw new BadRequestException('Module not found');
+    }
+
+    const contents = await this.prisma.content.findMany({
+      where: { module_id: module.module_id },
+    });
+
+    const moduleResponse: ModuleResponseDto2 = {
+      title: module.title,
+      module_id: module.module_id,
+      sinopsys: module.sinopsys,
+      thumbnail: module.thumbnail,
+      age_group: module.age_group,
+      user_id: module.user_id,
+
+      contents: contents.map((content) => ({
+        content_id: content.content_id,
+        text: content.text ?? '',
+        image: content.image ?? '',
+        template: content.template ?? '',
+        video_link: content.video_link ?? '',
+        module_id: content.module_id,
+      })),
+    };
+
+    return moduleResponse;
   }
 }

@@ -9,6 +9,20 @@ export class ModuleResponseDto {
   contents: ContentResponseDto[];
 }
 
+export class ModuleResponseDto2 {
+  @IsString()
+  @IsNotEmpty()
+  title: string;
+  module_id: string;
+  sinopsys: string;
+  thumbnail: string;
+  age_group: string;
+  user_id: string;
+
+
+  contents: ContentResponseDto[];
+}
+
 export class ModuleCardResponseDto {
   @IsString()
   @IsNotEmpty()
