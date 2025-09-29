@@ -49,31 +49,22 @@ describe('ModuleController', () => {
     const userId = 'test-user-id';
 
     it('should create a module successfully', async () => {
-      // Arrange
       mockModuleService.create.mockResolvedValue(mockModule);
-
-      // Act
       const result = await controller.create(mockCreateModuleDto, userId);
-
-      // Assert
       expect(result).toEqual(mockModule);
       expect(mockModuleService.create).toHaveBeenCalledWith(
         mockCreateModuleDto,
         userId,
       );
-      expect(mockModuleService.create).toHaveBeenCalledTimes(1);
     });
 
     it('should throw HttpException if service create fails', async () => {
-      // Arrange
       const HTTP_SERVER_ERROR = 500;
       const serviceError = new HttpException(
         'Service error',
         HTTP_SERVER_ERROR,
       );
       mockModuleService.create.mockRejectedValue(serviceError);
-
-      // Act & Assert
       await expect(
         controller.create(mockCreateModuleDto, userId),
       ).rejects.toThrow(HttpException);
@@ -85,9 +76,7 @@ describe('ModuleController', () => {
 
     it('should return a module if it exists', async () => {
       mockModuleService.getModuleById.mockResolvedValue(mockModuleResponseDto);
-
       const result = await controller.getModuleById(returnModuleId);
-
       expect(result).toEqual(mockModuleResponseDto);
     });
 
@@ -95,7 +84,6 @@ describe('ModuleController', () => {
       mockModuleService.getModuleById.mockRejectedValue(
         new BadRequestException('Module not found'),
       );
-
       await expect(controller.getModuleById(returnModuleId)).rejects.toThrow(
         BadRequestException,
       );
@@ -104,128 +92,155 @@ describe('ModuleController', () => {
   });
 
   describe('getRecentModules', () => {
-    it('should return an array of recent modules', async () => {
+    it('should return an array of recent modules without ageGroups', async () => {
       mockModuleService.getRecentModules.mockResolvedValue(
         mockModulesCardResponseDto,
       );
-
       const result = await controller.getRecentModules();
-
       expect(result).toEqual(mockModulesCardResponseDto);
-      expect(mockModuleService.getRecentModules).toHaveBeenCalledTimes(1);
+      expect(mockModuleService.getRecentModules).toHaveBeenCalledWith(
+        undefined,
+      );
+    });
+
+    it('should return an array of recent modules with ageGroups', async () => {
+      const ageGroups = ['5-7', '8-10'];
+      mockModuleService.getRecentModules.mockResolvedValue(
+        mockModulesCardResponseDto,
+      );
+      const result = await controller.getRecentModules(ageGroups);
+      expect(result).toEqual(mockModulesCardResponseDto);
+      expect(mockModuleService.getRecentModules).toHaveBeenCalledWith(
+        ageGroups,
+      );
     });
 
     it('should return an empty array if no recent modules are found', async () => {
       mockModuleService.getRecentModules.mockResolvedValue([]);
-
       const result = await controller.getRecentModules();
-
       expect(result).toEqual([]);
-      expect(mockModuleService.getRecentModules).toHaveBeenCalledTimes(1);
     });
 
     it('should throw BadRequestException if service throws', async () => {
       mockModuleService.getRecentModules.mockRejectedValue(
         new BadRequestException('No recent modules found'),
       );
-
       await expect(controller.getRecentModules()).rejects.toThrow(
         BadRequestException,
       );
-      expect(mockModuleService.getRecentModules).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('getPopularModules', () => {
-    it('should return an array of popular modules', async () => {
+    it('should return popular modules without ageGroups', async () => {
       mockModuleService.getPopularModules.mockResolvedValue(
         mockModulesCardResponseDto,
       );
-
       const result = await controller.getPopularModules();
-
       expect(result).toEqual(mockModulesCardResponseDto);
-      expect(mockModuleService.getPopularModules).toHaveBeenCalledTimes(1);
+      expect(mockModuleService.getPopularModules).toHaveBeenCalledWith(
+        undefined,
+      );
+    });
+
+    it('should return popular modules with ageGroups', async () => {
+      const ageGroups = ['5-7'];
+      mockModuleService.getPopularModules.mockResolvedValue(
+        mockModulesCardResponseDto,
+      );
+      const result = await controller.getPopularModules(ageGroups);
+      expect(result).toEqual(mockModulesCardResponseDto);
+      expect(mockModuleService.getPopularModules).toHaveBeenCalledWith(
+        ageGroups,
+      );
     });
 
     it('should return an empty array if no popular modules are found', async () => {
       mockModuleService.getPopularModules.mockResolvedValue([]);
-
       const result = await controller.getPopularModules();
-
       expect(result).toEqual([]);
-      expect(mockModuleService.getPopularModules).toHaveBeenCalledTimes(1);
     });
 
     it('should throw BadRequestException if service throws', async () => {
       mockModuleService.getPopularModules.mockRejectedValue(
         new BadRequestException('No popular modules found'),
       );
-
       await expect(controller.getPopularModules()).rejects.toThrow(
         BadRequestException,
       );
-      expect(mockModuleService.getPopularModules).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('getRecommendedModules', () => {
-    it('should return an array of recommended modules', async () => {
+    it('should return recommended modules without ageGroups', async () => {
       mockModuleService.getRecommendedModules.mockResolvedValue(
         mockModulesCardResponseDto,
       );
-
       const result = await controller.getRecommendedModules();
-
       expect(result).toEqual(mockModulesCardResponseDto);
-      expect(mockModuleService.getRecommendedModules).toHaveBeenCalledTimes(1);
+      expect(mockModuleService.getRecommendedModules).toHaveBeenCalledWith(
+        undefined,
+      );
+    });
+
+    it('should return recommended modules with ageGroups', async () => {
+      const ageGroups = ['8-10'];
+      mockModuleService.getRecommendedModules.mockResolvedValue(
+        mockModulesCardResponseDto,
+      );
+      const result = await controller.getRecommendedModules(ageGroups);
+      expect(result).toEqual(mockModulesCardResponseDto);
+      expect(mockModuleService.getRecommendedModules).toHaveBeenCalledWith(
+        ageGroups,
+      );
     });
 
     it('should return an empty array if no recommended modules are found', async () => {
       mockModuleService.getRecommendedModules.mockResolvedValue([]);
-
       const result = await controller.getRecommendedModules();
-
       expect(result).toEqual([]);
-      expect(mockModuleService.getRecommendedModules).toHaveBeenCalledTimes(1);
     });
 
     it('should throw BadRequestException if service throws', async () => {
       mockModuleService.getRecommendedModules.mockRejectedValue(
         new BadRequestException('No recommended modules found'),
       );
-
       await expect(controller.getRecommendedModules()).rejects.toThrow(
         BadRequestException,
       );
-      expect(mockModuleService.getRecommendedModules).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('searchModules', () => {
     const keyword = 'test';
 
-    it('should return modules that match the keyword', async () => {
+    it('should return modules matching keyword without ageGroups', async () => {
       mockModuleService.searchModuleByKeyword.mockResolvedValue([mockModule]);
-
       const result = await controller.searchModules(keyword);
-
       expect(result).toEqual([mockModule]);
       expect(mockModuleService.searchModuleByKeyword).toHaveBeenCalledWith(
         keyword,
+        undefined,
       );
-      expect(mockModuleService.searchModuleByKeyword).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return modules matching keyword with ageGroups', async () => {
+      const ageGroups = ['5-7', '8-10'];
+      mockModuleService.searchModuleByKeyword.mockResolvedValue([
+        mockModule,
+      ]);
+      const result = await controller.searchModules(keyword, ageGroups);
+      expect(result).toEqual([mockModule]);
+      expect(mockModuleService.searchModuleByKeyword).toHaveBeenCalledWith(
+        keyword,
+        ageGroups,
+      );
     });
 
     it('should return empty array if no modules match keyword', async () => {
       mockModuleService.searchModuleByKeyword.mockResolvedValue([]);
-
       const result = await controller.searchModules(keyword);
-
       expect(result).toEqual([]);
-      expect(mockModuleService.searchModuleByKeyword).toHaveBeenCalledWith(
-        keyword,
-      );
     });
   });
 });

@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { ModuleCardResponseDto, ModuleResponseDto } from './dtos/module.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 
 interface RandomModuleResult {
   module_id: string;
@@ -67,8 +68,17 @@ export class ModuleService {
     return moduleResponse;
   }
 
-  async getRecentModules(): Promise<ModuleCardResponseDto[]> {
+  async getRecentModules(
+    ageGroups?: string[],
+  ): Promise<ModuleCardResponseDto[]> {
+    const where: Prisma.ModuleWhereInput = {};
+
+    if (ageGroups && ageGroups.length > 0) {
+      where.age_group = { in: ageGroups };
+    }
+
     const modules = await this.prisma.module.findMany({
+      where,
       orderBy: { creation_date: 'desc' },
     });
 
@@ -85,8 +95,17 @@ export class ModuleService {
     }));
   }
 
-  async getPopularModules(): Promise<ModuleCardResponseDto[]> {
+  async getPopularModules(
+    ageGroups?: string[],
+  ): Promise<ModuleCardResponseDto[]> {
+    const where: Prisma.ModuleWhereInput = {};
+
+    if (ageGroups && ageGroups.length > 0) {
+      where.age_group = { in: ageGroups };
+    }
+
     const modules = await this.prisma.module.findMany({
+      where,
       orderBy: { views: 'desc' },
     });
 
@@ -103,10 +122,18 @@ export class ModuleService {
     }));
   }
 
-  async getRecommendedModules(): Promise<ModuleCardResponseDto[]> {
+  async getRecommendedModules(
+    ageGroups?: string[],
+  ): Promise<ModuleCardResponseDto[]> {
+    const whereClause =
+    ageGroups && ageGroups.length > 0
+      ? Prisma.sql`WHERE "age_group" IN (${Prisma.join(ageGroups)})`
+      : Prisma.empty;
+
     const modules = await this.prisma.$queryRaw<RandomModuleResult[]>`
       SELECT module_id, title, synopsis, thumbnail, age_group 
-      FROM "Module" 
+      FROM "Module"
+      ${whereClause}
       ORDER BY RANDOM()
     `;
 
@@ -125,14 +152,24 @@ export class ModuleService {
 
   async searchModuleByKeyword(
     keyword: string,
+    ageGroups?: string[],
   ): Promise<ModuleCardResponseDto[]> {
+    const searchCondition: Prisma.ModuleWhereInput = {
+      OR: [
+        { title: { contains: keyword, mode: 'insensitive' } },
+        { synopsis: { contains: keyword, mode: 'insensitive' } },
+      ],
+    };
+
+    let where: Prisma.ModuleWhereInput = searchCondition;
+    if (ageGroups && ageGroups.length > 0) {
+      where = {
+        AND: [searchCondition, { age_group: { in: ageGroups } }],
+      };
+    }
+
     const modulos = await this.prisma.module.findMany({
-      where: {
-        OR: [
-          { title: { contains: keyword, mode: 'insensitive' } },
-          { synopsis: { contains: keyword, mode: 'insensitive' } },
-        ],
-      },
+      where,
       select: {
         module_id: true,
         title: true,
@@ -149,6 +186,6 @@ export class ModuleService {
       thumbnail: module.thumbnail,
       age_group: module.age_group,
     }));
-    return moduleCards;
+    return moduleCards;  
   }
 }

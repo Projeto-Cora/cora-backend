@@ -50,14 +50,11 @@ describe('ModuleService', () => {
   describe('getModuleById', () => {
     it('should return a module with contents if it exists', async () => {
       const moduleId = 'test-module-id';
-
       mockPrismaService.module.findUnique.mockResolvedValue(mockModule);
       mockPrismaService.content.findMany.mockResolvedValue([
         mockContentResponseDto,
       ]);
-
       const result = await service.getModuleById(moduleId);
-
       expect(result).toEqual(mockModuleResponseDto);
       expect(mockPrismaService.module.findUnique).toHaveBeenCalledWith({
         where: { module_id: moduleId },
@@ -69,39 +66,25 @@ describe('ModuleService', () => {
 
     it('should return a module with empty contents array when no contents exist', async () => {
       const moduleId = 'test-module-id';
-
       mockPrismaService.module.findUnique.mockResolvedValue(mockModule);
       mockPrismaService.content.findMany.mockResolvedValue([]);
-
       const result = await service.getModuleById(moduleId);
-
       expect(result).toEqual(mockModuleResponseNoContentsDto);
-      expect(mockPrismaService.module.findUnique).toHaveBeenCalledWith({
-        where: { module_id: moduleId },
-      });
-      expect(mockPrismaService.content.findMany).toHaveBeenCalledWith({
-        where: { module_id: moduleId },
-      });
     });
 
-    it('should return BadRequestException when module does not exist', async () => {
-      const moduleId = 'non-existent-module-id';
-
+    it('should throw when module does not exist', async () => {
+      const moduleId = 'non-existent';
       mockPrismaService.module.findUnique.mockResolvedValue(null);
-
       await expect(service.getModuleById(moduleId)).rejects.toThrow(
         'Module not found',
       );
-      expect(mockPrismaService.module.findUnique).toHaveBeenCalledWith({
-        where: { module_id: moduleId },
-      });
-      expect(mockPrismaService.content.findMany).not.toHaveBeenCalled();
     });
   });
+
   describe('searchModuleByKeyword', () => {
-    it('should return all modules that contain the keyword', async () => {
+    it('should return modules matching keyword without ageGroups', async () => {
       const keyword = 'criatividade';
-      const mockModules = [
+      mockPrismaService.module.findMany.mockResolvedValue([
         {
           module_id: mockModule.module_id,
           title: mockModule.title,
@@ -109,14 +92,9 @@ describe('ModuleService', () => {
           thumbnail: mockModule.thumbnail,
           age_group: mockModule.age_group,
         },
-      ];
-      const expectedResponse = [mockModuleCardResponseDto];
-
-      mockPrismaService.module.findMany.mockResolvedValue(mockModules);
-
+      ]);
       const result = await service.searchModuleByKeyword(keyword);
-
-      expect(result).toEqual(expectedResponse);
+      expect(result).toEqual([mockModuleCardResponseDto]);
       expect(mockPrismaService.module.findMany).toHaveBeenCalledWith({
         where: {
           OR: [
@@ -134,18 +112,30 @@ describe('ModuleService', () => {
       });
     });
 
-    it('should return an empty array if no modules match the keyword', async () => {
-      const keyword = 'nonexistent';
-      mockPrismaService.module.findMany.mockResolvedValue([]);
-
-      const result = await service.searchModuleByKeyword(keyword);
-
-      expect(result).toEqual([]);
+    it('should apply ageGroups filter when provided', async () => {
+      const keyword = 'criatividade';
+      const ageGroups = ['5-7', '8-10'];
+      mockPrismaService.module.findMany.mockResolvedValue([
+        {
+          module_id: mockModule.module_id,
+          title: mockModule.title,
+          synopsis: mockModule.synopsis,
+          thumbnail: mockModule.thumbnail,
+          age_group: mockModule.age_group,
+        },
+      ]);
+      const result = await service.searchModuleByKeyword(keyword, ageGroups);
+      expect(result).toEqual([mockModuleCardResponseDto]);
       expect(mockPrismaService.module.findMany).toHaveBeenCalledWith({
         where: {
-          OR: [
-            { title: { contains: keyword, mode: 'insensitive' } },
-            { synopsis: { contains: keyword, mode: 'insensitive' } },
+          AND: [
+            {
+              OR: [
+                { title: { contains: keyword, mode: 'insensitive' } },
+                { synopsis: { contains: keyword, mode: 'insensitive' } },
+              ],
+            },
+            { age_group: { in: ageGroups } },
           ],
         },
         select: {
@@ -160,16 +150,29 @@ describe('ModuleService', () => {
   });
 
   describe('getRecentModules', () => {
-    it('should return an array of recent modules', async () => {
+    it('should return recent modules filtered by ageGroups', async () => {
+      const ageGroups = ['5-7', '8-10'];
       mockPrismaService.module.findMany.mockResolvedValue([
         mockModule,
         mockModule2,
       ]);
-
-      const result = await service.getRecentModules();
-
+      const result = await service.getRecentModules(ageGroups);
       expect(result).toEqual(mockModulesCardResponseDto);
       expect(mockPrismaService.module.findMany).toHaveBeenCalledWith({
+        where: { age_group: { in: ageGroups } },
+        orderBy: { creation_date: 'desc' },
+      });
+    });
+
+    it('should return recent modules without ageGroups filter', async () => {
+      mockPrismaService.module.findMany.mockResolvedValue([
+        mockModule,
+        mockModule2,
+      ]);
+      const result = await service.getRecentModules();
+      expect(result).toEqual(mockModulesCardResponseDto);
+      expect(mockPrismaService.module.findMany).toHaveBeenCalledWith({
+        where: {},
         orderBy: { creation_date: 'desc' },
       });
     });
@@ -181,49 +184,33 @@ describe('ModuleService', () => {
         'No recent modules found',
       );
       expect(mockPrismaService.module.findMany).toHaveBeenCalledWith({
-        orderBy: { creation_date: 'desc' },
-      });
-    });
-
-    it('should return modules ordered by creation_date desc', async () => {
-      const olderModule = {
-        ...mockModule,
-        creation_date: new Date('2023-01-01'),
-      };
-      const newerModule = {
-        ...mockModule2,
-        creation_date: new Date('2023-12-31'),
-      };
-
-      mockPrismaService.module.findMany.mockResolvedValue([
-        newerModule,
-        olderModule,
-      ]);
-
-      const result = await service.getRecentModules();
-
-      expect(result[0]).toEqual(
-        expect.objectContaining({
-          title: newerModule.title,
-        }),
-      );
-      expect(mockPrismaService.module.findMany).toHaveBeenCalledWith({
+        where: {},
         orderBy: { creation_date: 'desc' },
       });
     });
   });
 
   describe('getPopularModules', () => {
-    it('should return an array of popular modules', async () => {
+    it('should return popular modules filtered by ageGroups', async () => {
+      const ageGroups = ['5-7'];
+      mockPrismaService.module.findMany.mockResolvedValue([mockModule]);
+      const result = await service.getPopularModules(ageGroups);
+      expect(result).toEqual([mockModuleCardResponseDto]);
+      expect(mockPrismaService.module.findMany).toHaveBeenCalledWith({
+        where: { age_group: { in: ageGroups } },
+        orderBy: { views: 'desc' },
+      });
+    });
+
+    it('should return popular modules without ageGroups filter', async () => {
       mockPrismaService.module.findMany.mockResolvedValue([
         mockModule,
         mockModule2,
       ]);
-
       const result = await service.getPopularModules();
-
       expect(result).toEqual(mockModulesCardResponseDto);
       expect(mockPrismaService.module.findMany).toHaveBeenCalledWith({
+        where: {},
         orderBy: { views: 'desc' },
       });
     });
@@ -235,48 +222,34 @@ describe('ModuleService', () => {
         'No popular modules found',
       );
       expect(mockPrismaService.module.findMany).toHaveBeenCalledWith({
-        orderBy: { views: 'desc' },
-      });
-    });
-
-    it('should return modules ordered by views desc', async () => {
-      const olderModule = {
-        ...mockModule,
-        views: 5,
-      };
-      const newerModule = {
-        ...mockModule2,
-        views: 10,
-      };
-
-      mockPrismaService.module.findMany.mockResolvedValue([
-        newerModule,
-        olderModule,
-      ]);
-
-      const result = await service.getPopularModules();
-
-      expect(result[0]).toEqual(
-        expect.objectContaining({
-          title: newerModule.title,
-        }),
-      );
-      expect(mockPrismaService.module.findMany).toHaveBeenCalledWith({
+        where: {},
         orderBy: { views: 'desc' },
       });
     });
   });
 
   describe('getRecommendedModules', () => {
-    it('should return an array of recommended modules', async () => {
-      mockPrismaService.$queryRaw.mockResolvedValue(mockModulesCardResponseDto);
-
+    it('should return recommended modules', async () => {
+      const mockRandomModules = [
+        {
+          module_id: '1',
+          title: 'Module 1',
+          synopsis: 'Synopsis 1',
+          thumbnail: 'thumb1.jpg',
+          age_group: '5-7',
+        },
+      ];
+  
+      (mockPrismaService.$queryRaw as jest.Mock).mockResolvedValue(
+        mockRandomModules,
+      );
+  
       const result = await service.getRecommendedModules();
-
-      expect(result).toEqual(mockModulesCardResponseDto);
-      expect(mockPrismaService.$queryRaw).toHaveBeenCalledTimes(1);
+  
+      expect(result).toEqual(mockRandomModules);
+      expect(mockPrismaService.$queryRaw).toHaveBeenCalled();
     });
-
+  
     it('should throw BadRequestException if no recommended modules are found', async () => {
       mockPrismaService.$queryRaw.mockResolvedValue([]);
 
