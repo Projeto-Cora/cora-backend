@@ -7,6 +7,7 @@ import {
   mockCreateModuleDto,
   mockModule,
   mockModuleResponseDto,
+  mockModuleResponseDtoADM,
   mockModulesCardResponseDto,
 } from './module.mock';
 
@@ -21,6 +22,7 @@ describe('ModuleController', () => {
     searchModuleByKeyword: jest.fn(),
     getPopularModules: jest.fn(),
     getRecommendedModules: jest.fn(),
+    getModuleByIdADM: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -239,6 +241,26 @@ describe('ModuleController', () => {
       mockModuleService.searchModuleByKeyword.mockResolvedValue([]);
       const result = await controller.searchModules(keyword);
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('getModuleByIdADM', () => {
+    const returnModuleId = 'test-mock-response-id';
+
+    it('should return a module if it exists', async () => {
+      mockModuleService.getModuleByIdADM.mockResolvedValue(mockModuleResponseDtoADM);
+      const result = await controller.getModuleByIdADM(returnModuleId);
+      expect(result).toEqual(mockModuleResponseDtoADM);
+    });
+
+    it('should throw BadRequestException if no module is found', async () => {
+      mockModuleService.getModuleByIdADM.mockRejectedValue(
+        new BadRequestException('Module not found'),
+      );
+      await expect(controller.getModuleByIdADM(returnModuleId)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(mockModuleService.getModuleByIdADM).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -9,7 +9,7 @@ export class ModuleResponseDto {
   contents: ContentResponseDto[];
 }
 
-export class ModuleResponseDto2 {
+export class ModuleResponseDtoADM {
   @IsString()
   @IsNotEmpty()
   title: string;

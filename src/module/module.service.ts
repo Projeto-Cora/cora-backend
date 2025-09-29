@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { ModuleCardResponseDto, ModuleResponseDto, ModuleResponseDto2 } from './dtos/module.dto';
+import { ModuleCardResponseDto, ModuleResponseDto, ModuleResponseDtoADM } from './dtos/module.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
@@ -189,7 +189,7 @@ export class ModuleService {
     return moduleCards;
   }
   // This is the getModule using id function for editing modules (Us17)
-  async getModuleById2(moduleId: string): Promise<ModuleResponseDto2> {
+  async getModuleByIdADM(moduleId: string): Promise<ModuleResponseDtoADM> {
     const module = await this.prisma.module.findUnique({
       where: { module_id: moduleId },
     });
@@ -202,7 +202,7 @@ export class ModuleService {
       where: { module_id: module.module_id },
     });
 
-    const moduleResponse: ModuleResponseDto2 = {
+    const moduleResponse: ModuleResponseDtoADM = {
       title: module.title,
       module_id: module.module_id,
       sinopsys: module.sinopsys,

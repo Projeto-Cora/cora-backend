@@ -8,6 +8,8 @@ import {
   mockModuleResponseDto,
   mockModuleResponseNoContentsDto,
   mockModulesCardResponseDto,
+  mockModuleResponseDtoADM,
+  mockModuleResponseNoContentsDtoADM,
 } from './module.mock';
 import { mockContentResponseDto } from '../content/content.mock';
 
@@ -258,6 +260,39 @@ describe('ModuleService', () => {
         'No recommended modules found',
       );
       expect(mockPrismaService.$queryRaw).toHaveBeenCalledTimes(1);
+    });
+  });
+  
+   describe('getModuleByIdADM', () => {
+    it('should return a complete module with contents if it exists', async () => {
+      const moduleId = 'test-module-id';
+      mockPrismaService.module.findUnique.mockResolvedValue(mockModule);
+      mockPrismaService.content.findMany.mockResolvedValue([
+        mockContentResponseDto,
+      ]);
+      const result = await service.getModuleByIdADM(moduleId);
+      expect(result).toEqual(mockModuleResponseDtoADM);
+      expect(mockPrismaService.module.findUnique).toHaveBeenCalledWith({
+        where: { module_id: moduleId },
+      });
+      expect(mockPrismaService.content.findMany).toHaveBeenCalledWith({
+        where: { module_id: moduleId },
+      });
+    });
+    it('should return a module with empty contents array when no contents exist', async () => {
+      const moduleId = 'test-module-id';
+      mockPrismaService.module.findUnique.mockResolvedValue(mockModule);
+      mockPrismaService.content.findMany.mockResolvedValue([]);
+      const result = await service.getModuleByIdADM(moduleId);
+      expect(result).toEqual(mockModuleResponseNoContentsDtoADM);
+    });
+
+    it('should throw when module does not exist', async () => {
+      const moduleId = 'non-existent';
+      mockPrismaService.module.findUnique.mockResolvedValue(null);
+      await expect(service.getModuleByIdADM(moduleId)).rejects.toThrow(
+        'Module not found',
+      );
     });
   });
 });

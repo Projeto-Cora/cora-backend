@@ -1,5 +1,5 @@
 import { Module } from '@prisma/client';
-import { ModuleResponseDto, ModuleCardResponseDto } from './dtos/module.dto';
+import { ModuleResponseDto, ModuleCardResponseDto, ModuleResponseDtoADM } from './dtos/module.dto';
 import { mockContentResponseDto } from '../content/content.mock';
 
 export const mockModule: Module = {
@@ -43,6 +43,26 @@ export const mockModuleResponseNoContentsDto: ModuleResponseDto = {
   title: 'Module Title',
   contents: [],
 };
+
+export const mockModuleResponseDtoADM: ModuleResponseDtoADM = {
+  title: 'Module Title',
+  module_id: 'test-module-id',
+  sinopsys: 'This is a test module synopsis.',
+  thumbnail: 'image.jpg',
+  age_group: '5-7',
+  user_id: 'test-user-id',
+  contents: [mockContentResponseDto],
+};
+export const mockModuleResponseNoContentsDtoADM: ModuleResponseDtoADM = {
+  title: 'Module Title',
+  module_id: 'test-module-id',
+  sinopsys: 'This is a test module synopsis.',
+  thumbnail: 'image.jpg',
+  age_group: '5-7',
+  user_id: 'test-user-id',
+  contents: [],
+};
+
 
 export const mockModuleCardResponseDto = {
   module_id: 'test-module-id',
