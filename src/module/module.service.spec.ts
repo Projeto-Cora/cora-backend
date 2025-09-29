@@ -239,17 +239,18 @@ describe('ModuleService', () => {
           age_group: '5-7',
         },
       ];
-  
+
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       (mockPrismaService.$queryRaw as jest.Mock).mockResolvedValue(
         mockRandomModules,
       );
-  
+
       const result = await service.getRecommendedModules();
-  
+
       expect(result).toEqual(mockRandomModules);
       expect(mockPrismaService.$queryRaw).toHaveBeenCalled();
     });
-  
+
     it('should throw BadRequestException if no recommended modules are found', async () => {
       mockPrismaService.$queryRaw.mockResolvedValue([]);
 

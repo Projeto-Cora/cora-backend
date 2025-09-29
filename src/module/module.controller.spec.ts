@@ -226,9 +226,7 @@ describe('ModuleController', () => {
 
     it('should return modules matching keyword with ageGroups', async () => {
       const ageGroups = ['5-7', '8-10'];
-      mockModuleService.searchModuleByKeyword.mockResolvedValue([
-        mockModule,
-      ]);
+      mockModuleService.searchModuleByKeyword.mockResolvedValue([mockModule]);
       const result = await controller.searchModules(keyword, ageGroups);
       expect(result).toEqual([mockModule]);
       expect(mockModuleService.searchModuleByKeyword).toHaveBeenCalledWith(

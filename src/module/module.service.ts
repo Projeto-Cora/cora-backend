@@ -126,9 +126,9 @@ export class ModuleService {
     ageGroups?: string[],
   ): Promise<ModuleCardResponseDto[]> {
     const whereClause =
-    ageGroups && ageGroups.length > 0
-      ? Prisma.sql`WHERE "age_group" IN (${Prisma.join(ageGroups)})`
-      : Prisma.empty;
+      ageGroups && ageGroups.length > 0
+        ? Prisma.sql`WHERE "age_group" IN (${Prisma.join(ageGroups)})`
+        : Prisma.empty;
 
     const modules = await this.prisma.$queryRaw<RandomModuleResult[]>`
       SELECT module_id, title, synopsis, thumbnail, age_group 
@@ -186,6 +186,6 @@ export class ModuleService {
       thumbnail: module.thumbnail,
       age_group: module.age_group,
     }));
-    return moduleCards;  
+    return moduleCards;
   }
 }
