@@ -186,47 +186,52 @@ export class ModuleService {
       throw new NotFoundException(`Module with ID ${moduleId} not found`);
     }
 
-    await this.prisma.module.update({
-      where: { module_id: moduleId },
-      data: {
-        title: updateModuleDto.title ?? existingModule.title,
-        synopsis: updateModuleDto.synopsis ?? existingModule.synopsis,
-        thumbnail: updateModuleDto.thumbnail ?? existingModule.thumbnail,
-        age_group: updateModuleDto.age_group ?? existingModule.age_group,
-      },
-    });
+    const result = await this.prisma.$transaction(async (tx) => {
+      await tx.module.update({
+        where: { module_id: moduleId },
+        data: {
+          title: updateModuleDto.title ?? existingModule.title,
+          synopsis: updateModuleDto.synopsis ?? existingModule.synopsis,
+          thumbnail: updateModuleDto.thumbnail ?? existingModule.thumbnail,
+          age_group: updateModuleDto.age_group ?? existingModule.age_group,
+        },
+      });
 
-    if (updateModuleDto.contents && updateModuleDto.contents.length > 0) {
-      for (const contentDto of updateModuleDto.contents) {
-        await this.prisma.content.update({
-          where: { content_id: contentDto.content_id },
-          data: {
-            text: contentDto.text,
-            image: contentDto.image,
-            template: contentDto.template,
-            video_link: contentDto.video_link,
-          },
-        });
+      if (updateModuleDto.contents && updateModuleDto.contents.length > 0) {
+        const contentUpdates = updateModuleDto.contents.map((contentDto) =>
+          tx.content.update({
+            where: { content_id: contentDto.content_id },
+            data: {
+              text: contentDto.text,
+              image: contentDto.image,
+              template: contentDto.template,
+              video_link: contentDto.video_link,
+            },
+          }),
+        );
+
+        await Promise.all(contentUpdates);
       }
-    }
 
-    const finalModule = await this.prisma.module.findUnique({
-      where: { module_id: moduleId },
-      include: { contents: true },
+      return await tx.module.findUnique({
+        where: { module_id: moduleId },
+        include: { contents: true },
+      });
     });
 
-    if (!finalModule) {
+    if (!result) {
       throw new NotFoundException(
         `Module with ID ${moduleId} not found after update`,
       );
     }
+
     return {
-      module_id: finalModule.module_id,
-      title: finalModule.title,
-      synopsis: finalModule.synopsis,
-      thumbnail: finalModule.thumbnail,
-      age_group: finalModule.age_group,
-      contents: finalModule.contents.map((content) => ({
+      module_id: result.module_id,
+      title: result.title,
+      synopsis: result.synopsis,
+      thumbnail: result.thumbnail,
+      age_group: result.age_group,
+      contents: result.contents.map((content) => ({
         content_id: content.content_id,
         text: content.text ?? '',
         image: content.image ?? '',
