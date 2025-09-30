@@ -1,5 +1,14 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { ModuleCardResponseDto, ModuleResponseDto } from './dtos/module.dto';
+import {
+  Injectable,
+  BadRequestException,
+  UnauthorizedException,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  ModuleCardResponseDto,
+  ModuleFullResponseDto,
+  ModuleResponseDto,
+} from './dtos/module.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
@@ -187,5 +196,86 @@ export class ModuleService {
       age_group: module.age_group,
     }));
     return moduleCards;
+  }
+
+  async updateModule(
+    moduleId: string,
+    updateModuleDto: Partial<Omit<ModuleFullResponseDto, 'module_id'>>,
+    userId: string,
+  ): Promise<ModuleFullResponseDto> {
+    const user = await this.prisma.user.findUnique({
+      where: { user_id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException(`User with ID ${userId} does not exist`);
+    }
+
+    if (user.user_type !== 'admin') {
+      throw new UnauthorizedException(`User ${userId} is not authorized`);
+    }
+
+    const existingModule = await this.prisma.module.findUnique({
+      where: { module_id: moduleId },
+    });
+
+    if (!existingModule) {
+      throw new NotFoundException(`Module with ID ${moduleId} not found`);
+    }
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      await tx.module.update({
+        where: { module_id: moduleId },
+        data: {
+          title: updateModuleDto.title ?? existingModule.title,
+          synopsis: updateModuleDto.synopsis ?? existingModule.synopsis,
+          thumbnail: updateModuleDto.thumbnail ?? existingModule.thumbnail,
+          age_group: updateModuleDto.age_group ?? existingModule.age_group,
+        },
+      });
+
+      if (updateModuleDto.contents && updateModuleDto.contents.length > 0) {
+        const contentUpdates = updateModuleDto.contents.map((contentDto) =>
+          tx.content.update({
+            where: { content_id: contentDto.content_id },
+            data: {
+              text: contentDto.text,
+              image: contentDto.image,
+              template: contentDto.template,
+              video_link: contentDto.video_link,
+            },
+          }),
+        );
+
+        await Promise.all(contentUpdates);
+      }
+
+      return await tx.module.findUnique({
+        where: { module_id: moduleId },
+        include: { contents: true },
+      });
+    });
+
+    if (!result) {
+      throw new NotFoundException(
+        `Module with ID ${moduleId} not found after update`,
+      );
+    }
+
+    return {
+      module_id: result.module_id,
+      title: result.title,
+      synopsis: result.synopsis,
+      thumbnail: result.thumbnail,
+      age_group: result.age_group,
+      contents: result.contents.map((content) => ({
+        content_id: content.content_id,
+        text: content.text ?? '',
+        image: content.image ?? '',
+        template: content.template ?? '',
+        video_link: content.video_link ?? '',
+        module_id: content.module_id,
+      })),
+    };
   }
 }
