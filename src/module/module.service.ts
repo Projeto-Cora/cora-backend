@@ -5,11 +5,7 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
-import {
-  ModuleCardResponseDto,
-  ModuleFullResponseDto,
-  ModuleResponseDto,
-} from './dtos/module.dto';
+import { ModuleCardResponseDto, ModuleResponseDto } from './dtos/module.dto';
 import { PrismaService } from '../prisma/prisma.service';
 
 interface RandomModuleResult {
@@ -28,7 +24,6 @@ export class ModuleService {
     createModuleDto: Omit<ModuleCardResponseDto, 'module_id'>,
     userId: string,
   ): Promise<ModuleCardResponseDto> {
-    // Verify if user exists
     const userExists = await this.prisma.user.findUnique({
       where: { user_id: userId },
     });
@@ -51,7 +46,7 @@ export class ModuleService {
 
   async getModuleById(moduleId: string): Promise<ModuleResponseDto> {
     const module = await this.prisma.module.findUnique({
-      where: { module_id: moduleId },
+      where: { module_id: moduleId, deletedAt: null },
     });
 
     if (!module) {
@@ -79,6 +74,7 @@ export class ModuleService {
 
   async getRecentModules(): Promise<ModuleCardResponseDto[]> {
     const modules = await this.prisma.module.findMany({
+      where: { deletedAt: null },
       orderBy: { creation_date: 'desc' },
     });
 
@@ -97,6 +93,7 @@ export class ModuleService {
 
   async getPopularModules(): Promise<ModuleCardResponseDto[]> {
     const modules = await this.prisma.module.findMany({
+      where: { deletedAt: null },
       orderBy: { views: 'desc' },
     });
 
@@ -117,6 +114,7 @@ export class ModuleService {
     const modules = await this.prisma.$queryRaw<RandomModuleResult[]>`
       SELECT module_id, title, synopsis, thumbnail, age_group 
       FROM "Module" 
+      WHERE "deletedAt" IS NULL
       ORDER BY RANDOM()
     `;
 
@@ -138,6 +136,7 @@ export class ModuleService {
   ): Promise<ModuleCardResponseDto[]> {
     const modulos = await this.prisma.module.findMany({
       where: {
+        deletedAt: null,
         OR: [
           { title: { contains: keyword, mode: 'insensitive' } },
           { synopsis: { contains: keyword, mode: 'insensitive' } },
@@ -162,86 +161,7 @@ export class ModuleService {
     return moduleCards;
   }
 
-  async updateModule(
-    moduleId: string,
-    updateModuleDto: Partial<Omit<ModuleFullResponseDto, 'module_id'>>,
-    userId: string,
-  ): Promise<ModuleFullResponseDto> {
-    const user = await this.prisma.user.findUnique({
-      where: { user_id: userId },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException(`User with ID ${userId} does not exist`);
-    }
-
-    if (user.user_type !== 'admin') {
-      throw new UnauthorizedException(`User ${userId} is not authorized`);
-    }
-
-    const existingModule = await this.prisma.module.findUnique({
-      where: { module_id: moduleId },
-    });
-
-    if (!existingModule) {
-      throw new NotFoundException(`Module with ID ${moduleId} not found`);
-    }
-
-    await this.prisma.module.update({
-      where: { module_id: moduleId },
-      data: {
-        title: updateModuleDto.title ?? existingModule.title,
-        synopsis: updateModuleDto.synopsis ?? existingModule.synopsis,
-        thumbnail: updateModuleDto.thumbnail ?? existingModule.thumbnail,
-        age_group: updateModuleDto.age_group ?? existingModule.age_group,
-      },
-    });
-
-    if (updateModuleDto.contents && updateModuleDto.contents.length > 0) {
-      for (const contentDto of updateModuleDto.contents) {
-        await this.prisma.content.update({
-          where: { content_id: contentDto.content_id },
-          data: {
-            text: contentDto.text,
-            image: contentDto.image,
-            template: contentDto.template,
-            video_link: contentDto.video_link,
-          },
-        });
-      }
-    }
-
-    const finalModule = await this.prisma.module.findUnique({
-      where: { module_id: moduleId },
-      include: { contents: true },
-    });
-
-    if (!finalModule) {
-      throw new NotFoundException(
-        `Module with ID ${moduleId} not found after update`,
-      );
-    }
-    return {
-      module_id: finalModule.module_id,
-      title: finalModule.title,
-      synopsis: finalModule.synopsis,
-      thumbnail: finalModule.thumbnail,
-      age_group: finalModule.age_group,
-      contents: finalModule.contents.map((content) => ({
-        content_id: content.content_id,
-        text: content.text ?? '',
-        image: content.image ?? '',
-        template: content.template ?? '',
-        video_link: content.video_link ?? '',
-        module_id: content.module_id,
-      })),
-    };
-  }
-
-  async softDeleteModule(
-    moduleId: string,
-    userId: string,
-  ): Promise<{ message: string }> {
+  async deleteModule(moduleId: string, userId: string): Promise<void> {
     const user = await this.prisma.user.findUnique({
       where: { user_id: userId },
     });
@@ -266,7 +186,5 @@ export class ModuleService {
       where: { module_id: moduleId },
       data: { deletedAt: new Date() },
     });
-
-    return { message: `Module with ID ${moduleId} successfully soft deleted` };
   }
 }

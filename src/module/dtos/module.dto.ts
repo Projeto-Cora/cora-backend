@@ -1,6 +1,5 @@
-import { IsString, IsNotEmpty, ValidateNested } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
 import { ContentResponseDto } from '../../content/dtos/content.dto';
-import { Type } from 'class-transformer';
 
 export class ModuleResponseDto {
   @IsString()
@@ -30,30 +29,4 @@ export class ModuleCardResponseDto {
   @IsString()
   @IsNotEmpty()
   age_group: string;
-}
-
-export class ModuleFullResponseDto {
-  @IsString()
-  @IsNotEmpty()
-  module_id: string;
-
-  @IsString()
-  @IsNotEmpty()
-  title: string;
-
-  @IsString()
-  @IsNotEmpty()
-  synopsis: string;
-
-  @IsString()
-  @IsNotEmpty()
-  thumbnail: string;
-
-  @IsString()
-  @IsNotEmpty()
-  age_group: string;
-
-  @ValidateNested({ each: true })
-  @Type(() => ContentResponseDto)
-  contents: ContentResponseDto[];
 }

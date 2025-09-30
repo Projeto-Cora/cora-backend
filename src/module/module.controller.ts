@@ -7,15 +7,12 @@ import {
   Param,
   Query,
   UnauthorizedException,
-  Put,
   Patch,
+  HttpStatus,
+  HttpCode,
 } from '@nestjs/common';
 import { ModuleService } from './module.service';
-import {
-  ModuleCardResponseDto,
-  ModuleFullResponseDto,
-  ModuleResponseDto,
-} from './dtos/module.dto';
+import { ModuleCardResponseDto, ModuleResponseDto } from './dtos/module.dto';
 
 @Controller('module')
 export class ModuleController {
@@ -62,20 +59,16 @@ export class ModuleController {
     return await this.moduleService.searchModuleByKeyword(keyword);
   }
 
-  @Put('/id/:id')
-  async updateModule(
-    @Param('id') id: string,
-    @Body() updateModuleDto: Partial<Omit<ModuleFullResponseDto, 'module_id'>>,
-    @Headers('x-user-id') userId: string,
-  ): Promise<ModuleFullResponseDto> {
-    return await this.moduleService.updateModule(id, updateModuleDto, userId);
-  }
-
   @Patch('/id/:id/delete')
-  async softDeleteModule(
+  @HttpCode(HttpStatus.OK)
+  async deleteModule(
     @Param('id') id: string,
     @Headers('x-user-id') userId: string,
-  ): Promise<{ message: string }> {
-    return await this.moduleService.softDeleteModule(id, userId);
+  ): Promise<{ message: string; statusCode: number }> {
+    await this.moduleService.deleteModule(id, userId);
+    return {
+      message: 'Module successfully deleted',
+      statusCode: HttpStatus.OK,
+    };
   }
 }
