@@ -9,6 +9,7 @@ import {
   mockModuleResponseDto,
   mockModulesCardResponseDto,
 } from './module.mock';
+import { AuthenticatedRequest } from '../auth/dtos/auth.dto';
 
 describe('ModuleController', () => {
   let controller: ModuleController;
@@ -47,10 +48,13 @@ describe('ModuleController', () => {
 
   describe('create', () => {
     const userId = 'test-user-id';
+    const mockRequest = {
+      payload: { userId: userId, userType: 'parent' },
+    } as AuthenticatedRequest;
 
     it('should create a module successfully', async () => {
       mockModuleService.create.mockResolvedValue(mockModule);
-      const result = await controller.create(mockCreateModuleDto, userId);
+      const result = await controller.create(mockRequest, mockCreateModuleDto);
       expect(result).toEqual(mockModule);
       expect(mockModuleService.create).toHaveBeenCalledWith(
         mockCreateModuleDto,
@@ -66,7 +70,7 @@ describe('ModuleController', () => {
       );
       mockModuleService.create.mockRejectedValue(serviceError);
       await expect(
-        controller.create(mockCreateModuleDto, userId),
+        controller.create(mockRequest, mockCreateModuleDto),
       ).rejects.toThrow(HttpException);
     });
   });

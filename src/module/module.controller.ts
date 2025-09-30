@@ -2,16 +2,15 @@ import {
   Controller,
   Post,
   Body,
-  Headers,
   Get,
   Param,
   Query,
-  UnauthorizedException,
   Patch,
   HttpStatus,
   HttpCode,
   Put,
   ParseArrayPipe,
+  Req,
 } from '@nestjs/common';
 import { ModuleService } from './module.service';
 import {
@@ -19,23 +18,21 @@ import {
   ModuleFullResponseDto,
   ModuleResponseDto,
 } from './dtos/module.dto';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import type { AuthenticatedRequest } from '../auth/dtos/auth.dto';
 
+@ApiTags('Module')
+@ApiBearerAuth('Authorization')
 @Controller('module')
 export class ModuleController {
   constructor(private readonly moduleService: ModuleService) {}
 
   @Post('/create')
   async create(
+    @Req() req: AuthenticatedRequest,
     @Body() moduleDto: Omit<ModuleCardResponseDto, 'module_id'>,
-    @Headers('x-user-id') userId: string,
   ): Promise<ModuleCardResponseDto> {
-    if (!userId) {
-      throw new UnauthorizedException(
-        'User ID is required in x-user-id header',
-      );
-    }
-
-    return await this.moduleService.create(moduleDto, userId);
+    return await this.moduleService.create(moduleDto, req.payload.userId);
   }
 
   @Get('/id/:id')
@@ -92,18 +89,22 @@ export class ModuleController {
   async updateModule(
     @Param('id') id: string,
     @Body() updateModuleDto: Partial<Omit<ModuleFullResponseDto, 'module_id'>>,
-    @Headers('x-user-id') userId: string,
+    @Req() req: AuthenticatedRequest,
   ): Promise<ModuleFullResponseDto> {
-    return await this.moduleService.updateModule(id, updateModuleDto, userId);
+    return await this.moduleService.updateModule(
+      id,
+      updateModuleDto,
+      req.payload.userId,
+    );
   }
 
   @Patch('/id/:id/delete')
   @HttpCode(HttpStatus.OK)
   async deleteModule(
+    @Req() req: AuthenticatedRequest,
     @Param('id') id: string,
-    @Headers('x-user-id') userId: string,
   ): Promise<{ message: string; statusCode: number }> {
-    await this.moduleService.deleteModule(id, userId);
+    await this.moduleService.deleteModule(id, req.payload.userId);
     return {
       message: 'Module successfully deleted',
       statusCode: HttpStatus.OK,
