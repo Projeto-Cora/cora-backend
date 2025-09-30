@@ -1,21 +1,46 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateUserDto } from './dtos/user.dto';
-import { Child, SpecialistProfile } from '@prisma/client';
-import { UserType } from 'src/module/enum/user-type-enum';
+import {
+  ChildrenResponseDto,
+  CreateUserDto,
+  UserResponseDto,
+  SpecialistProfileResponseDto,
+} from './dtos/user.dto';
+import { UserType } from 'src/user/enum/user-type-enum';
 
 @Injectable()
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     const { children, specialist_profile, ...userData } = createUserDto;
 
     const existingUser = await this.prisma.user.findUnique({
       where: { email: userData.email },
     });
     if (existingUser) {
-      throw new BadRequestException('Email já cadastrado');
+      throw new ConflictException('Email já cadastrado');
+    }
+
+    if (!Object.values(UserType).includes(userData.user_type)) {
+      throw new BadRequestException('User type invalid.');
+    }
+
+    if (
+      userData.user_type === UserType.PARENT &&
+      (!children || children.length === 0)
+    ) {
+      throw new BadRequestException('Parent must have at least one child');
+    }
+
+    if (userData.user_type === UserType.SPECIALIST && !specialist_profile) {
+      throw new BadRequestException(
+        'Specialist must have a specialist profile',
+      );
     }
 
     const result = await this.prisma.$transaction(async (prisma) => {
@@ -29,25 +54,22 @@ export class UserService {
         },
       });
 
-      let createdChildren: Child[] = [];
-      let createdSpecialistProfile: SpecialistProfile | null = null;
+      let createdChildren: ChildrenResponseDto[] = [];
+      let createdSpecialistProfile: SpecialistProfileResponseDto | null = null;
 
-      if (userData.user_type === UserType.RESPONSIBLE && children?.length) {
-        const childrenData = children.map((child) => ({
-          name: child.name,
-          birth_date: child.birth_date,
-          age_group: child.age_group,
-          parent_id: user.user_id,
-        }));
+      if (userData.user_type === UserType.PARENT && children?.length) {
+        const childCreationPromises = children.map((child) =>
+          prisma.child.create({
+            data: {
+              name: child.name,
+              birth_date: new Date(child.birth_date),
+              age_group: child.age_group,
+              parent_id: user.user_id,
+            },
+          }),
+        );
 
-        await prisma.child.createMany({
-          data: childrenData,
-          skipDuplicates: true,
-        });
-
-        createdChildren = await prisma.child.findMany({
-          where: { parent_id: user.user_id },
-        });
+        createdChildren = await Promise.all(childCreationPromises);
       }
 
       if (userData.user_type === UserType.SPECIALIST && specialist_profile) {

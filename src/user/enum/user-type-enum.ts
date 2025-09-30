@@ -1,5 +1,5 @@
 export enum UserType {
   ADMIN = 'admin',
-  RESPONSIBLE = 'parent',
+  PARENT = 'parent',
   SPECIALIST = 'specialist',
 }
