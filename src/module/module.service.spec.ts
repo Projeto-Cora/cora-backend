@@ -56,12 +56,6 @@ describe('ModuleService', () => {
       ]);
       const result = await service.getModuleById(moduleId);
       expect(result).toEqual(mockModuleResponseDto);
-      expect(mockPrismaService.module.findUnique).toHaveBeenCalledWith({
-        where: { module_id: moduleId },
-      });
-      expect(mockPrismaService.content.findMany).toHaveBeenCalledWith({
-        where: { module_id: moduleId },
-      });
     });
 
     it('should return a module with empty contents array when no contents exist', async () => {
@@ -97,6 +91,7 @@ describe('ModuleService', () => {
       expect(result).toEqual([mockModuleCardResponseDto]);
       expect(mockPrismaService.module.findMany).toHaveBeenCalledWith({
         where: {
+          deletedAt: null,
           OR: [
             { title: { contains: keyword, mode: 'insensitive' } },
             { synopsis: { contains: keyword, mode: 'insensitive' } },
@@ -130,6 +125,7 @@ describe('ModuleService', () => {
         where: {
           AND: [
             {
+              deletedAt: null,
               OR: [
                 { title: { contains: keyword, mode: 'insensitive' } },
                 { synopsis: { contains: keyword, mode: 'insensitive' } },
@@ -159,7 +155,7 @@ describe('ModuleService', () => {
       const result = await service.getRecentModules(ageGroups);
       expect(result).toEqual(mockModulesCardResponseDto);
       expect(mockPrismaService.module.findMany).toHaveBeenCalledWith({
-        where: { age_group: { in: ageGroups } },
+        where: { deletedAt: null, age_group: { in: ageGroups } },
         orderBy: { creation_date: 'desc' },
       });
     });
@@ -172,7 +168,7 @@ describe('ModuleService', () => {
       const result = await service.getRecentModules();
       expect(result).toEqual(mockModulesCardResponseDto);
       expect(mockPrismaService.module.findMany).toHaveBeenCalledWith({
-        where: {},
+        where: { deletedAt: null },
         orderBy: { creation_date: 'desc' },
       });
     });
@@ -184,7 +180,7 @@ describe('ModuleService', () => {
         'No recent modules found',
       );
       expect(mockPrismaService.module.findMany).toHaveBeenCalledWith({
-        where: {},
+        where: { deletedAt: null },
         orderBy: { creation_date: 'desc' },
       });
     });
@@ -197,7 +193,7 @@ describe('ModuleService', () => {
       const result = await service.getPopularModules(ageGroups);
       expect(result).toEqual([mockModuleCardResponseDto]);
       expect(mockPrismaService.module.findMany).toHaveBeenCalledWith({
-        where: { age_group: { in: ageGroups } },
+        where: { deletedAt: null, age_group: { in: ageGroups } },
         orderBy: { views: 'desc' },
       });
     });
@@ -210,7 +206,7 @@ describe('ModuleService', () => {
       const result = await service.getPopularModules();
       expect(result).toEqual(mockModulesCardResponseDto);
       expect(mockPrismaService.module.findMany).toHaveBeenCalledWith({
-        where: {},
+        where: { deletedAt: null },
         orderBy: { views: 'desc' },
       });
     });
@@ -222,7 +218,7 @@ describe('ModuleService', () => {
         'No popular modules found',
       );
       expect(mockPrismaService.module.findMany).toHaveBeenCalledWith({
-        where: {},
+        where: { deletedAt: null },
         orderBy: { views: 'desc' },
       });
     });

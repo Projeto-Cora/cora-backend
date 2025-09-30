@@ -3,6 +3,7 @@ import {
   BadRequestException,
   UnauthorizedException,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ModuleCardResponseDto,
@@ -28,7 +29,6 @@ export class ModuleService {
     createModuleDto: Omit<ModuleCardResponseDto, 'module_id'>,
     userId: string,
   ): Promise<ModuleCardResponseDto> {
-    // Verify if user exists
     const userExists = await this.prisma.user.findUnique({
       where: { user_id: userId },
     });
@@ -51,7 +51,7 @@ export class ModuleService {
 
   async getModuleById(moduleId: string): Promise<ModuleResponseDto> {
     const module = await this.prisma.module.findUnique({
-      where: { module_id: moduleId },
+      where: { module_id: moduleId, deletedAt: null },
     });
 
     if (!module) {
@@ -80,7 +80,9 @@ export class ModuleService {
   async getRecentModules(
     ageGroups?: string[],
   ): Promise<ModuleCardResponseDto[]> {
-    const where: Prisma.ModuleWhereInput = {};
+    const where: Prisma.ModuleWhereInput = {
+      deletedAt: null,
+    };
 
     if (ageGroups && ageGroups.length > 0) {
       where.age_group = { in: ageGroups };
@@ -107,7 +109,9 @@ export class ModuleService {
   async getPopularModules(
     ageGroups?: string[],
   ): Promise<ModuleCardResponseDto[]> {
-    const where: Prisma.ModuleWhereInput = {};
+    const where: Prisma.ModuleWhereInput = {
+      deletedAt: null,
+    };
 
     if (ageGroups && ageGroups.length > 0) {
       where.age_group = { in: ageGroups };
@@ -134,15 +138,16 @@ export class ModuleService {
   async getRecommendedModules(
     ageGroups?: string[],
   ): Promise<ModuleCardResponseDto[]> {
-    const whereClause =
+    const ageGroupFilter =
       ageGroups && ageGroups.length > 0
-        ? Prisma.sql`WHERE "age_group" IN (${Prisma.join(ageGroups)})`
+        ? Prisma.sql`AND "age_group" IN (${Prisma.join(ageGroups)})`
         : Prisma.empty;
 
     const modules = await this.prisma.$queryRaw<RandomModuleResult[]>`
       SELECT module_id, title, synopsis, thumbnail, age_group 
       FROM "Module"
-      ${whereClause}
+      WHERE "deletedAt" IS NULL
+      ${ageGroupFilter}
       ORDER BY RANDOM()
     `;
 
@@ -164,6 +169,7 @@ export class ModuleService {
     ageGroups?: string[],
   ): Promise<ModuleCardResponseDto[]> {
     const searchCondition: Prisma.ModuleWhereInput = {
+      deletedAt: null,
       OR: [
         { title: { contains: keyword, mode: 'insensitive' } },
         { synopsis: { contains: keyword, mode: 'insensitive' } },
@@ -216,7 +222,7 @@ export class ModuleService {
     }
 
     const existingModule = await this.prisma.module.findUnique({
-      where: { module_id: moduleId },
+      where: { module_id: moduleId, deletedAt: null },
     });
 
     if (!existingModule) {
@@ -277,5 +283,32 @@ export class ModuleService {
         module_id: content.module_id,
       })),
     };
+  }
+
+  async deleteModule(moduleId: string, userId: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { user_id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException(`User with ID ${userId} does not exist`);
+    }
+
+    if (user.user_type !== 'admin') {
+      throw new ForbiddenException(`User ${userId} is not authorized`);
+    }
+
+    const existingModule = await this.prisma.module.findUnique({
+      where: { module_id: moduleId },
+    });
+
+    if (!existingModule) {
+      throw new NotFoundException(`Module with ID ${moduleId} not found`);
+    }
+
+    await this.prisma.module.update({
+      where: { module_id: moduleId },
+      data: { deletedAt: new Date() },
+    });
   }
 }

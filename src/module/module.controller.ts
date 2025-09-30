@@ -7,6 +7,9 @@ import {
   Param,
   Query,
   UnauthorizedException,
+  Patch,
+  HttpStatus,
+  HttpCode,
   Put,
   ParseArrayPipe,
 } from '@nestjs/common';
@@ -92,5 +95,18 @@ export class ModuleController {
     @Headers('x-user-id') userId: string,
   ): Promise<ModuleFullResponseDto> {
     return await this.moduleService.updateModule(id, updateModuleDto, userId);
+  }
+
+  @Patch('/id/:id/delete')
+  @HttpCode(HttpStatus.OK)
+  async deleteModule(
+    @Param('id') id: string,
+    @Headers('x-user-id') userId: string,
+  ): Promise<{ message: string; statusCode: number }> {
+    await this.moduleService.deleteModule(id, userId);
+    return {
+      message: 'Module successfully deleted',
+      statusCode: HttpStatus.OK,
+    };
   }
 }
