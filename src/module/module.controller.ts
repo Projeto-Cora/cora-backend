@@ -10,9 +10,15 @@ import {
   Patch,
   HttpStatus,
   HttpCode,
+  Put,
+  ParseArrayPipe,
 } from '@nestjs/common';
 import { ModuleService } from './module.service';
-import { ModuleCardResponseDto, ModuleResponseDto } from './dtos/module.dto';
+import {
+  ModuleCardResponseDto,
+  ModuleFullResponseDto,
+  ModuleResponseDto,
+} from './dtos/module.dto';
 
 @Controller('module')
 export class ModuleController {
@@ -38,25 +44,57 @@ export class ModuleController {
   }
 
   @Get('recents')
-  async getRecentModules(): Promise<ModuleCardResponseDto[]> {
-    return await this.moduleService.getRecentModules();
+  async getRecentModules(
+    @Query(
+      'age_group',
+      new ParseArrayPipe({ items: String, separator: ',', optional: true }),
+    )
+    ageGroups?: string[],
+  ): Promise<ModuleCardResponseDto[]> {
+    return await this.moduleService.getRecentModules(ageGroups);
   }
 
   @Get('popular')
-  async getPopularModules(): Promise<ModuleCardResponseDto[]> {
-    return await this.moduleService.getPopularModules();
+  async getPopularModules(
+    @Query(
+      'age_group',
+      new ParseArrayPipe({ items: String, separator: ',', optional: true }),
+    )
+    ageGroups?: string[],
+  ): Promise<ModuleCardResponseDto[]> {
+    return await this.moduleService.getPopularModules(ageGroups);
   }
 
   @Get('recommended')
-  async getRecommendedModules(): Promise<ModuleCardResponseDto[]> {
-    return await this.moduleService.getRecommendedModules();
+  async getRecommendedModules(
+    @Query(
+      'age_group',
+      new ParseArrayPipe({ items: String, separator: ',', optional: true }),
+    )
+    ageGroups?: string[],
+  ): Promise<ModuleCardResponseDto[]> {
+    return await this.moduleService.getRecommendedModules(ageGroups);
   }
 
   @Get('search')
   async searchModules(
     @Query('keyword') keyword: string,
+    @Query(
+      'age_group',
+      new ParseArrayPipe({ items: String, separator: ',', optional: true }),
+    )
+    ageGroups?: string[],
   ): Promise<ModuleCardResponseDto[]> {
-    return await this.moduleService.searchModuleByKeyword(keyword);
+    return await this.moduleService.searchModuleByKeyword(keyword, ageGroups);
+  }
+
+  @Put('/id/:id')
+  async updateModule(
+    @Param('id') id: string,
+    @Body() updateModuleDto: Partial<Omit<ModuleFullResponseDto, 'module_id'>>,
+    @Headers('x-user-id') userId: string,
+  ): Promise<ModuleFullResponseDto> {
+    return await this.moduleService.updateModule(id, updateModuleDto, userId);
   }
 
   @Patch('/id/:id/delete')
