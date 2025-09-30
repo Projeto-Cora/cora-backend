@@ -23,7 +23,7 @@ export class UserService {
       where: { email: userData.email },
     });
     if (existingUser) {
-      throw new ConflictException('Email já cadastrado');
+      throw new ConflictException('Email already in use.');
     }
 
     if (!Object.values(UserType).includes(userData.user_type)) {
