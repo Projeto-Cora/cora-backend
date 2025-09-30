@@ -1,7 +1,9 @@
 /* eslint-disable no-magic-numbers */
 import { PrismaClient } from '@prisma/client';
+import { HashService } from '../src/auth/hash.service';
 
 const prisma = new PrismaClient();
+const hashService = new HashService();
 
 async function main() {
   await prisma.user.createMany({
@@ -10,7 +12,7 @@ async function main() {
         user_id: '1e7b8f8e-8f8e-4f8e-8f8e-1e7b8f8e8f8e',
         name: 'Thiago Defini',
         email: 'thiago@example.com',
-        password: '123@password',
+        password: await hashService.hash('123@password'),
         user_type: 'admin',
         profile_picture: 'profile1.jpg',
         creation_date: new Date(),
@@ -19,7 +21,7 @@ async function main() {
         user_id: '2a7b8f8e-8f8e-4f8e-8f8e-2a7b8f8e8f8e',
         name: 'Francisco Coronel Pippi',
         email: 'francisco@example.com',
-        password: '123@password',
+        password: await hashService.hash('123@password'),
         user_type: 'parent',
         profile_picture: 'profile1.jpg',
         creation_date: new Date(),
@@ -28,7 +30,7 @@ async function main() {
         user_id: '3b7b8f8e-8f8e-4f8e-8f8e-3b7b8f8e8f8e',
         name: 'Maria Eduarda Wendel Maia',
         email: 'maria@example.com',
-        password: '123@password',
+        password: await hashService.hash('123@password'),
         user_type: 'specialist',
         profile_picture: 'profile1.jpg',
         creation_date: new Date(),

@@ -20,4 +20,5 @@ export class AccessTokenDTO {
 export class AuthenticatedUserDTO {
   userId: string;
   userName: string;
+  userType: string;
 }

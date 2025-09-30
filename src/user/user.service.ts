@@ -3,18 +3,22 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import {
   ChildrenResponseDto,
   CreateUserDto,
   UserResponseDto,
   SpecialistProfileResponseDto,
 } from './dtos/user.dto';
-import { UserType } from 'src/user/enum/user-type-enum';
+import { UserType } from './enum/user-type-enum';
+import { HashService } from '../auth/hash.service';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private hashService: HashService,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     const { children, specialist_profile, ...userData } = createUserDto;
@@ -48,7 +52,7 @@ export class UserService {
         data: {
           name: userData.name,
           email: userData.email,
-          password: userData.password,
+          password: await this.hashService.hash(userData.password),
           user_type: userData.user_type,
           profile_picture: userData.profile_picture ?? '',
         },

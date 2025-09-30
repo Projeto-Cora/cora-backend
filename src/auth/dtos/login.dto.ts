@@ -15,4 +15,11 @@ export class LoginDTO {
   @IsString()
   @IsNotEmpty()
   password: string;
+
+  @ApiProperty({
+    example: 'parent',
+  })
+  @IsString()
+  @IsNotEmpty()
+  user_type: string;
 }

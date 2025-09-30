@@ -19,9 +19,13 @@ export class AuthService {
   ) {}
 
   @IsPublic()
-  async validateUser({ email, password }: LoginDTO): Promise<AccessTokenDTO> {
+  async validateUser({
+    email,
+    password,
+    user_type,
+  }: LoginDTO): Promise<AccessTokenDTO> {
     const user = await this.prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
+      where: { email: email.toLowerCase(), user_type: user_type.toLowerCase() },
     });
 
     if (!user) {
@@ -32,7 +36,6 @@ export class AuthService {
     }
 
     const isMatch = await this.hashService.compare(password, user.password);
-    // const isMatch2 = password === user.password;
 
     if (!isMatch) {
       throw new HttpException(
@@ -41,7 +44,10 @@ export class AuthService {
       );
     }
 
-    const payload: AuthPayload = { userId: user.user_id };
+    const payload: AuthPayload = {
+      userId: user.user_id,
+      userType: user.user_type,
+    };
 
     const accessToken = await this.jwtService.signAsync(payload, {
       expiresIn: '3h',
@@ -62,6 +68,7 @@ export class AuthService {
     return {
       userId: user.user_id,
       userName: user.name,
+      userType: user.user_type,
     };
   }
 }

@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   CanActivate,
   ExecutionContext,
@@ -16,6 +13,7 @@ dotenv.config();
 
 export interface AuthPayload {
   userId: string;
+  userType: string;
 }
 
 @Injectable()
@@ -27,15 +25,6 @@ export class AuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const req = context.switchToHttp().getRequest();
-    // eslint-disable-next-line no-console
-    console.log(
-      'AuthGuard chamado para rota:',
-      req.method,
-      req.url,
-      'Authorization:',
-      req.headers.authorization || 'AUSENTE',
-    );
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
