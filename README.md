@@ -21,11 +21,45 @@ cd ProjetoCora
 
 ### 2. Configuração do ambiente
 
-Crie um arquivo `.env` na raiz do projeto com as seguintes credenciais:
+Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
 
 ```env
 DATABASE_URL="postgresql://cora:cora@localhost:5432/projeto_cora"
+
+JWT_SECRET=sua_chave_secreta_aqui
 ```
+
+#### Gerando JWT_SECRET
+
+Para gerar uma chave secreta segura para o JWT, use um dos comandos abaixo de acordo com seu sistema operacional:
+
+##### Linux/macOS
+```bash
+openssl rand -hex 64
+```
+
+##### Windows
+
+**Opção 1: PowerShell (Recomendado)**
+```powershell
+-join ((1..64) | ForEach {'{0:X}' -f (Get-Random -Max 16)})
+```
+
+**Opção 2: Node.js (Multiplataforma)**
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+
+##### Exemplo de `.env` completo:
+```env
+DATABASE_URL="postgresql://cora:cora@localhost:5432/projeto_cora"
+
+JWT_SECRET=61dcb3b1b9d69598b031947669ff866e4a1be352fa654b5fc16bfe60f350a860df48818e04fefa4d14eb79b54c4dc5ef44bd0f5a9099aaa6935619266959c9a2
+```
+
+> **⚠️ Importante**: 
+> - Use uma chave de pelo menos 64 caracteres
+> - Nunca compartilhe ou versione a chave secreta no repositório
 
 ### 3. Instalar dependências
 
@@ -44,17 +78,6 @@ Este comando irá:
 - Configurar o banco de dados com as credenciais especificadas
 - Expor o banco na porta 5432
 
-### 5. Executar as migrações do banco
-
-```bash
-npx prisma migrate dev --name init
-```
-
-Este comando irá:
-- Aplicar as migrações do Prisma
-- Criar as tabelas no banco de dados
-- Gerar o Prisma Client
-
 ## 🏃‍♂️ Executando a aplicação
 
 ### Modo de desenvolvimento
@@ -64,6 +87,16 @@ npm run start:dev
 ```
 
 A aplicação estará disponível em `http://localhost:3000`
+
+### 5. Popular o banco de dados (Seed)
+
+Após a aplicação estar rodando, execute o comando para popular o banco com dados iniciais:
+
+```bash
+npm run prisma:seed
+```
+
+Este comando irá criar dados de exemplo e usuários padrão para desenvolvimento.
 
 ### Modo de produção
 
