@@ -12,6 +12,7 @@ export const mockModule: Module = {
   creation_date: new Date(),
   updatedAt: new Date(),
   user_id: '',
+  deletedAt: null,
 };
 
 export const mockModule2: Module = {
@@ -24,6 +25,7 @@ export const mockModule2: Module = {
   creation_date: new Date(),
   updatedAt: new Date(),
   user_id: '',
+  deletedAt: null,
 };
 
 export const mockCreateModuleDto: ModuleCardResponseDto = {
