@@ -19,13 +19,9 @@ export class AuthService {
   ) {}
 
   @IsPublic()
-  async validateUser({
-    email,
-    password,
-    user_type,
-  }: LoginDTO): Promise<AccessTokenDTO> {
+  async validateUser({ email, password }: LoginDTO): Promise<AccessTokenDTO> {
     const user = await this.prisma.user.findUnique({
-      where: { email: email.toLowerCase(), user_type: user_type.toLowerCase() },
+      where: { email: email.toLowerCase() },
     });
 
     if (!user) {
@@ -53,7 +49,7 @@ export class AuthService {
       expiresIn: '3h',
     });
 
-    return { accessToken };
+    return { accessToken, userType: user.user_type };
   }
 
   async validateToken(userId: string): Promise<AuthenticatedUserDTO> {

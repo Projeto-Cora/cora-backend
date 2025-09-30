@@ -15,6 +15,14 @@ export class AccessTokenDTO {
   @IsString()
   @IsNotEmpty()
   accessToken: string;
+
+  @ApiProperty({
+    description: 'Type of user',
+    example: 'parent',
+  })
+  @IsString()
+  @IsNotEmpty()
+  userType: string;
 }
 
 export class AuthenticatedUserDTO {
