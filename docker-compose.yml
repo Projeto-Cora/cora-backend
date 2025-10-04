@@ -13,6 +13,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - nest-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cora -d projeto_cora"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
 
   app:
     build:
@@ -24,9 +30,11 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: postgresql://cora:cora@postgres:5432/projeto_cora
+      JWT_SECRET: ${JWT_SECRET}
       NODE_ENV: production
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - nest-network
     command: sh -c "npx prisma migrate deploy && node dist/src/main.js"
