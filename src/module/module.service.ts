@@ -18,7 +18,7 @@ interface RandomModuleResult {
   title: string;
   synopsis: string;
   thumbnail: string;
-  age_group: string;
+  age_group: string[]; // text[] in DB
 }
 
 @Injectable()
@@ -32,135 +32,118 @@ export class ModuleService {
     const userExists = await this.prisma.user.findUnique({
       where: { user_id: userId },
     });
-
     if (!userExists) {
       throw new BadRequestException(`User with ID ${userId} does not exist`);
     }
 
-    const module = await this.prisma.module.create({
+    const mod = await this.prisma.module.create({
       data: {
         title: createModuleDto.title,
         synopsis: createModuleDto.synopsis,
         thumbnail: createModuleDto.thumbnail,
-        age_group: createModuleDto.age_group,
+        age_group: createModuleDto.age_group, // string[]
         user_id: userId,
       },
     });
-    return module;
+
+    return {
+      module_id: mod.module_id,
+      title: mod.title,
+      synopsis: mod.synopsis,
+      thumbnail: mod.thumbnail,
+      age_group: mod.age_group,
+    };
   }
 
   async getModuleById(moduleId: string): Promise<ModuleResponseDto> {
-    const module = await this.prisma.module.findUnique({
+    // findUnique cannot include non-unique filters; use findFirst or findUnique then check deletedAt
+    const mod = await this.prisma.module.findFirst({
       where: { module_id: moduleId, deletedAt: null },
     });
-
-    if (!module) {
-      throw new BadRequestException('Module not found');
-    }
+    if (!mod) throw new BadRequestException('Module not found');
 
     const contents = await this.prisma.content.findMany({
-      where: { module_id: module.module_id },
+      where: { module_id: mod.module_id },
     });
 
-    const moduleResponse: ModuleResponseDto = {
-      title: module.title,
-      contents: contents.map((content) => ({
-        content_id: content.content_id,
-        text: content.text ?? '',
-        image: content.image ?? '',
-        template: content.template ?? '',
-        video_link: content.video_link ?? '',
-        module_id: content.module_id,
+    return {
+      title: mod.title,
+      contents: contents.map((c) => ({
+        content_id: c.content_id,
+        text: c.text ?? '',
+        image: c.image ?? '',
+        template: c.template ?? '',
+        video_link: c.video_link ?? '',
+        module_id: c.module_id,
       })),
     };
-
-    return moduleResponse;
   }
 
-  async getRecentModules(
-    ageGroups?: string[],
-  ): Promise<ModuleCardResponseDto[]> {
-    const where: Prisma.ModuleWhereInput = {
-      deletedAt: null,
-    };
-
-    if (ageGroups && ageGroups.length > 0) {
-      where.age_group = { in: ageGroups };
+  async getRecentModules(ageGroups?: string[]): Promise<ModuleCardResponseDto[]> {
+    const where: Prisma.ModuleWhereInput = { deletedAt: null };
+    if (ageGroups?.length) {
+      // text[] overlap
+      where.age_group = { hasSome: ageGroups };
     }
 
     const modules = await this.prisma.module.findMany({
       where,
       orderBy: { creation_date: 'desc' },
     });
+    if (!modules.length) throw new BadRequestException('No recent modules found');
 
-    if (!modules || modules.length === 0) {
-      throw new BadRequestException('No recent modules found');
-    }
-
-    return modules.map((module) => ({
-      module_id: module.module_id,
-      title: module.title,
-      synopsis: module.synopsis,
-      thumbnail: module.thumbnail,
-      age_group: module.age_group,
+    return modules.map((m) => ({
+      module_id: m.module_id,
+      title: m.title,
+      synopsis: m.synopsis,
+      thumbnail: m.thumbnail,
+      age_group: m.age_group,
     }));
   }
 
-  async getPopularModules(
-    ageGroups?: string[],
-  ): Promise<ModuleCardResponseDto[]> {
-    const where: Prisma.ModuleWhereInput = {
-      deletedAt: null,
-    };
-
-    if (ageGroups && ageGroups.length > 0) {
-      where.age_group = { in: ageGroups };
+  async getPopularModules(ageGroups?: string[]): Promise<ModuleCardResponseDto[]> {
+    const where: Prisma.ModuleWhereInput = { deletedAt: null };
+    if (ageGroups?.length) {
+      where.age_group = { hasSome: ageGroups };
     }
 
     const modules = await this.prisma.module.findMany({
       where,
       orderBy: { views: 'desc' },
     });
+    if (!modules.length) throw new BadRequestException('No popular modules found');
 
-    if (!modules || modules.length === 0) {
-      throw new BadRequestException('No popular modules found');
-    }
-
-    return modules.map((module) => ({
-      module_id: module.module_id,
-      title: module.title,
-      synopsis: module.synopsis,
-      thumbnail: module.thumbnail,
-      age_group: module.age_group,
+    return modules.map((m) => ({
+      module_id: m.module_id,
+      title: m.title,
+      synopsis: m.synopsis,
+      thumbnail: m.thumbnail,
+      age_group: m.age_group,
     }));
   }
 
-  async getRecommendedModules(
-    ageGroups?: string[],
-  ): Promise<ModuleCardResponseDto[]> {
+  async getRecommendedModules(ageGroups?: string[]): Promise<ModuleCardResponseDto[]> {
+    // Use raw SQL for ORDER BY RANDOM() and text[] overlap (&&)
     const ageGroupFilter =
       ageGroups && ageGroups.length > 0
-        ? Prisma.sql`AND "age_group" IN (${Prisma.join(ageGroups)})`
+        ? Prisma.sql`AND "age_group" && ARRAY[${Prisma.join(ageGroups)}]::text[]`
         : Prisma.empty;
 
     const modules = await this.prisma.$queryRaw<RandomModuleResult[]>`
-      SELECT module_id, title, synopsis, thumbnail, age_group 
+      SELECT "module_id", "title", "synopsis", "thumbnail", "age_group"
       FROM "Module"
       WHERE "deletedAt" IS NULL
       ${ageGroupFilter}
       ORDER BY RANDOM()
     `;
+    if (!modules.length) throw new BadRequestException('No recommended modules found');
 
-    if (!modules || modules.length === 0) {
-      throw new BadRequestException('No recommended modules found');
-    }
-
-    return modules.map((module) => ({
-      module_id: module.module_id,
-      title: module.title,
-      synopsis: module.synopsis,
-      thumbnail: module.thumbnail,
-      age_group: module.age_group,
+    return modules.map((m) => ({
+      module_id: m.module_id,
+      title: m.title,
+      synopsis: m.synopsis,
+      thumbnail: m.thumbnail,
+      age_group: m.age_group,
     }));
   }
 
@@ -168,7 +151,7 @@ export class ModuleService {
     keyword: string,
     ageGroups?: string[],
   ): Promise<ModuleCardResponseDto[]> {
-    const searchCondition: Prisma.ModuleWhereInput = {
+    const base: Prisma.ModuleWhereInput = {
       deletedAt: null,
       OR: [
         { title: { contains: keyword, mode: 'insensitive' } },
@@ -176,14 +159,12 @@ export class ModuleService {
       ],
     };
 
-    let where: Prisma.ModuleWhereInput = searchCondition;
-    if (ageGroups && ageGroups.length > 0) {
-      where = {
-        AND: [searchCondition, { age_group: { in: ageGroups } }],
-      };
-    }
+    const where: Prisma.ModuleWhereInput =
+      ageGroups && ageGroups.length > 0
+        ? { AND: [base, { age_group: { hasSome: ageGroups } }] }
+        : base;
 
-    const modulos = await this.prisma.module.findMany({
+    const modules = await this.prisma.module.findMany({
       where,
       select: {
         module_id: true,
@@ -194,14 +175,13 @@ export class ModuleService {
       },
     });
 
-    const moduleCards: ModuleCardResponseDto[] = modulos.map((module) => ({
-      module_id: module.module_id,
-      title: module.title,
-      synopsis: module.synopsis,
-      thumbnail: module.thumbnail,
-      age_group: module.age_group,
+    return modules.map((m) => ({
+      module_id: m.module_id,
+      title: m.title,
+      synopsis: m.synopsis,
+      thumbnail: m.thumbnail,
+      age_group: m.age_group,
     }));
-    return moduleCards;
   }
 
   async updateModule(
@@ -209,25 +189,15 @@ export class ModuleService {
     updateModuleDto: Partial<Omit<ModuleFullResponseDto, 'module_id'>>,
     userId: string,
   ): Promise<ModuleFullResponseDto> {
-    const user = await this.prisma.user.findUnique({
-      where: { user_id: userId },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException(`User with ID ${userId} does not exist`);
-    }
-
-    if (user.user_type !== 'admin') {
+    const user = await this.prisma.user.findUnique({ where: { user_id: userId } });
+    if (!user) throw new UnauthorizedException(`User with ID ${userId} does not exist`);
+    if (user.user_type !== 'admin')
       throw new UnauthorizedException(`User ${userId} is not authorized`);
-    }
 
-    const existingModule = await this.prisma.module.findUnique({
+    const existingModule = await this.prisma.module.findFirst({
       where: { module_id: moduleId, deletedAt: null },
     });
-
-    if (!existingModule) {
-      throw new NotFoundException(`Module with ID ${moduleId} not found`);
-    }
+    if (!existingModule) throw new NotFoundException(`Module with ID ${moduleId} not found`);
 
     const result = await this.prisma.$transaction(async (tx) => {
       await tx.module.update({
@@ -236,36 +206,34 @@ export class ModuleService {
           title: updateModuleDto.title ?? existingModule.title,
           synopsis: updateModuleDto.synopsis ?? existingModule.synopsis,
           thumbnail: updateModuleDto.thumbnail ?? existingModule.thumbnail,
-          age_group: updateModuleDto.age_group ?? existingModule.age_group,
+          age_group: updateModuleDto.age_group ?? existingModule.age_group, // string[]
         },
       });
 
-      if (updateModuleDto.contents && updateModuleDto.contents.length > 0) {
-        const contentUpdates = updateModuleDto.contents.map((contentDto) =>
-          tx.content.update({
-            where: { content_id: contentDto.content_id },
-            data: {
-              text: contentDto.text,
-              image: contentDto.image,
-              template: contentDto.template,
-              video_link: contentDto.video_link,
-            },
-          }),
+      if (updateModuleDto.contents?.length) {
+        await Promise.all(
+          updateModuleDto.contents.map((c) =>
+            tx.content.update({
+              where: { content_id: c.content_id },
+              data: {
+                text: c.text,
+                image: c.image,
+                template: c.template,
+                video_link: c.video_link,
+              },
+            }),
+          ),
         );
-
-        await Promise.all(contentUpdates);
       }
 
-      return await tx.module.findUnique({
+      return tx.module.findUnique({
         where: { module_id: moduleId },
         include: { contents: true },
       });
     });
 
     if (!result) {
-      throw new NotFoundException(
-        `Module with ID ${moduleId} not found after update`,
-      );
+      throw new NotFoundException(`Module with ID ${moduleId} not found after update`);
     }
 
     return {
@@ -274,37 +242,27 @@ export class ModuleService {
       synopsis: result.synopsis,
       thumbnail: result.thumbnail,
       age_group: result.age_group,
-      contents: result.contents.map((content) => ({
-        content_id: content.content_id,
-        text: content.text ?? '',
-        image: content.image ?? '',
-        template: content.template ?? '',
-        video_link: content.video_link ?? '',
-        module_id: content.module_id,
+      contents: result.contents.map((c) => ({
+        content_id: c.content_id,
+        text: c.text ?? '',
+        image: c.image ?? '',
+        template: c.template ?? '',
+        video_link: c.video_link ?? '',
+        module_id: c.module_id,
       })),
     };
   }
 
   async deleteModule(moduleId: string, userId: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({
-      where: { user_id: userId },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException(`User with ID ${userId} does not exist`);
-    }
-
-    if (user.user_type !== 'admin') {
+    const user = await this.prisma.user.findUnique({ where: { user_id: userId } });
+    if (!user) throw new UnauthorizedException(`User with ID ${userId} does not exist`);
+    if (user.user_type !== 'admin')
       throw new ForbiddenException(`User ${userId} is not authorized`);
-    }
 
     const existingModule = await this.prisma.module.findUnique({
       where: { module_id: moduleId },
     });
-
-    if (!existingModule) {
-      throw new NotFoundException(`Module with ID ${moduleId} not found`);
-    }
+    if (!existingModule) throw new NotFoundException(`Module with ID ${moduleId} not found`);
 
     await this.prisma.module.update({
       where: { module_id: moduleId },

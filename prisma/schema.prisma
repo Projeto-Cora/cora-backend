@@ -72,7 +72,7 @@ model Module {
   thumbnail     String
   creation_date DateTime @default(now())
   views         Int      @default(0)
-  age_group     String
+  age_group     String[]
   updatedAt     DateTime @updatedAt
   deletedAt     DateTime?
 
