@@ -19,12 +19,17 @@ export class UserCreationGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request: Request = context.switchToHttp().getRequest();
-    const body: CreateUserDto = request.body;
+    const body = request.body as CreateUserDto;
 
-    if (body.user_type === UserType.SPECIALIST || body.user_type === UserType.ADMIN) {
+    if (
+      body.user_type === UserType.SPECIALIST ||
+      body.user_type === UserType.ADMIN
+    ) {
       const token = this.extractTokenFromHeader(request);
       if (!token) {
-        throw new UnauthorizedException('É necessário um token de admin para criar este tipo de usuário.');
+        throw new UnauthorizedException(
+          'É necessário um token de admin para criar este tipo de usuário.',
+        );
       }
 
       try {
@@ -32,17 +37,18 @@ export class UserCreationGuard implements CanActivate {
           secret: process.env.JWT_SECRET,
         });
 
-        if (payload.userType !== UserType.ADMIN) {
-          throw new ForbiddenException('Apenas administradores podem criar especialistas.');
+        if (payload.userType === (UserType.ADMIN as string)) {
+          throw new ForbiddenException(
+            'Apenas administradores podem criar especialistas.',
+          );
         }
-        
-        request['payload'] = payload;
 
+        request.payload = payload;
       } catch (error) {
         if (error instanceof ForbiddenException) throw error;
         throw new UnauthorizedException('Token inválido ou expirado.');
       }
-    } 
+    }
     return true;
   }
 
