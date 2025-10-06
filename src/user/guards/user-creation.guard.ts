@@ -1,3 +1,5 @@
+// Em src/auth/guards/user-creation.guard.ts
+
 import {
   CanActivate,
   ExecutionContext,
@@ -7,13 +9,16 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserType } from '../enum/user-type-enum';
+import { Request } from 'express';
+import { AuthPayload } from '../../auth/auth.guard';
 
 @Injectable()
 export class UserCreationGuard implements CanActivate {
   constructor(private jwtService: JwtService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    // 2. Adicione o tipo 'Request' aqui
+    const request: Request = context.switchToHttp().getRequest();
     const { body } = request;
 
     if (body.user_type === UserType.SPECIALIST || body.user_type === UserType.ADMIN) {
@@ -23,7 +28,7 @@ export class UserCreationGuard implements CanActivate {
       }
 
       try {
-        const payload = await this.jwtService.verifyAsync(token, {
+        const payload = await this.jwtService.verifyAsync<AuthPayload>(token, {
           secret: process.env.JWT_SECRET,
         });
 
@@ -37,12 +42,11 @@ export class UserCreationGuard implements CanActivate {
         if (error instanceof ForbiddenException) throw error;
         throw new UnauthorizedException('Token inválido ou expirado.');
       }
-    
     } 
     return true;
   }
 
-  private extractTokenFromHeader(request: { headers: { authorization?: string } }): string | undefined {
+  private extractTokenFromHeader(request: Request): string | undefined {
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
     return type === 'Bearer' ? token : undefined;
   }

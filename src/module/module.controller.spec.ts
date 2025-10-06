@@ -16,7 +16,6 @@ import { RolesGuard } from '../auth/roles.guard';
 
 describe('ModuleController', () => {
   let controller: ModuleController;
-  let service: ModuleService;
 
   const mockModuleService = {
     create: jest.fn(),
@@ -50,7 +49,6 @@ describe('ModuleController', () => {
     }).compile();
 
     controller = module.get<ModuleController>(ModuleController);
-    service = module.get<ModuleService>(ModuleService);
   });
 
   afterEach(() => {
