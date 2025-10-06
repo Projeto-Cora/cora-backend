@@ -11,15 +11,15 @@ import { JwtService } from '@nestjs/jwt';
 import { UserType } from '../enum/user-type-enum';
 import { Request } from 'express';
 import { AuthPayload } from '../../auth/auth.guard';
+import { CreateUserDto } from '../dtos/user.dto';
 
 @Injectable()
 export class UserCreationGuard implements CanActivate {
   constructor(private jwtService: JwtService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    // 2. Adicione o tipo 'Request' aqui
     const request: Request = context.switchToHttp().getRequest();
-    const { body } = request;
+    const body: CreateUserDto = request.body;
 
     if (body.user_type === UserType.SPECIALIST || body.user_type === UserType.ADMIN) {
       const token = this.extractTokenFromHeader(request);
