@@ -11,6 +11,7 @@ import {
   Put,
   ParseArrayPipe,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { ModuleService } from './module.service';
 import {
@@ -21,6 +22,11 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { AuthenticatedRequest } from '../auth/dtos/auth.dto';
 
+import { AuthGuard } from '../auth/auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserType } from '../user/enum/user-type-enum';
+
 @ApiTags('Module')
 @ApiBearerAuth('Authorization')
 @Controller('module')
@@ -28,6 +34,8 @@ export class ModuleController {
   constructor(private readonly moduleService: ModuleService) {}
 
   @Post('/create')
+  @Roles(UserType.ADMIN)
+  @UseGuards(AuthGuard, RolesGuard)
   async create(
     @Req() req: AuthenticatedRequest,
     @Body() moduleDto: Omit<ModuleCardResponseDto, 'module_id'>,
@@ -86,6 +94,8 @@ export class ModuleController {
   }
 
   @Put('/id/:id')
+  @Roles(UserType.ADMIN)
+  @UseGuards(AuthGuard, RolesGuard)
   async updateModule(
     @Param('id') id: string,
     @Body() updateModuleDto: Partial<Omit<ModuleFullResponseDto, 'module_id'>>,
@@ -99,6 +109,8 @@ export class ModuleController {
   }
 
   @Patch('/id/:id/delete')
+  @Roles(UserType.ADMIN)
+  @UseGuards(AuthGuard, RolesGuard)
   @HttpCode(HttpStatus.OK)
   async deleteModule(
     @Req() req: AuthenticatedRequest,
