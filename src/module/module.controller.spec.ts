@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, HttpException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 
 import { ModuleController } from './module.controller';
 import { ModuleService } from './module.service';
@@ -10,6 +11,8 @@ import {
   mockModulesCardResponseDto,
 } from './module.mock';
 import { AuthenticatedRequest } from '../auth/dtos/auth.dto';
+import { AuthGuard } from '../auth/auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
 
 describe('ModuleController', () => {
   let controller: ModuleController;
@@ -22,6 +25,8 @@ describe('ModuleController', () => {
     searchModuleByKeyword: jest.fn(),
     getPopularModules: jest.fn(),
     getRecommendedModules: jest.fn(),
+    updateModule: jest.fn(),
+    deleteModule: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -31,6 +36,14 @@ describe('ModuleController', () => {
         {
           provide: ModuleService,
           useValue: mockModuleService,
+        },
+        AuthGuard,
+        RolesGuard,
+        {
+          provide: JwtService,
+          useValue: {
+            verifyAsync: jest.fn().mockResolvedValue({}),
+          },
         },
       ],
     }).compile();
