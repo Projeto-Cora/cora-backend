@@ -3,68 +3,116 @@ import {
   IsArray,
   IsDateString,
   IsEmail,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
 import { UserType } from '../enum/user-type-enum';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateChildDto {
+  @ApiProperty({
+    example: 'João Silva',
+  })
   @IsString()
   @IsNotEmpty()
   name: string;
 
+  @ApiProperty({
+    example: '2018-05-15',
+  })
   @IsDateString()
   @IsNotEmpty()
   birth_date: Date;
 
+  @ApiProperty({
+    example: '6-8 anos',
+  })
   @IsString()
   @IsNotEmpty()
   age_group: string;
 }
 
 export class CreateSpecialistProfileDto {
+  @ApiProperty({
+    example: 'Psicologia Infantil',
+  })
   @IsString()
   @IsNotEmpty()
   specialty: string;
 
+  @ApiProperty({
+    example:
+      'Especialista em desenvolvimento infantil com 10 anos de experiência',
+  })
   @IsString()
   @IsNotEmpty()
   description: string;
 
+  @ApiProperty({
+    example: 'CRP 12345',
+  })
   @IsString()
   @IsNotEmpty()
   council_number: string;
 }
 
 export class CreateUserDto {
+  @ApiProperty({
+    example: 'enzo',
+  })
   @IsString()
   @IsNotEmpty()
   name: string;
 
+  @ApiProperty({
+    example: 'enzo@example.com',
+  })
   @IsEmail()
   @IsNotEmpty()
   email: string;
 
+  @ApiProperty({
+    example: '123@password',
+  })
   @IsString()
   @IsNotEmpty()
   password: string;
 
-  @IsString()
+  @ApiProperty({
+    example: 'parent',
+    enum: UserType,
+    enumName: 'UserType',
+  })
+  @IsEnum(UserType, {
+    message: 'user_type deve ser: admin, parent ou specialist',
+  })
   @IsNotEmpty()
   user_type: UserType;
 
+  @ApiProperty({
+    example: 'https://example.com/profile.jpg',
+  })
   @IsString()
   @IsOptional()
   profile_picture?: string;
 
+  @ApiProperty({
+    type: [CreateChildDto],
+    required: false,
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateChildDto)
   @IsOptional()
   children?: CreateChildDto[];
 
+  @ApiProperty({
+    type: CreateSpecialistProfileDto,
+    required: false,
+  })
   @ValidateNested()
   @Type(() => CreateSpecialistProfileDto)
   @IsOptional()

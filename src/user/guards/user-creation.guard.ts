@@ -37,7 +37,7 @@ export class UserCreationGuard implements CanActivate {
           secret: process.env.JWT_SECRET,
         });
 
-        if (payload.userType === (UserType.ADMIN as string)) {
+        if (payload.userType !== (UserType.ADMIN as string)) {
           throw new ForbiddenException(
             'Apenas administradores podem criar especialistas.',
           );
