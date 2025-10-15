@@ -28,8 +28,6 @@ export class ModuleCardResponseDto {
   thumbnail: string;
 
   @IsArray()
-  @IsString({ each: true })
-  @IsNotEmpty({ each: true })
   age_group: string[];
 }
 

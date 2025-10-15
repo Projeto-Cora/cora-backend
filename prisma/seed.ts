@@ -129,7 +129,7 @@ async function main() {
         synopsis:
           'Explore o mundo da criatividade e descubra como ela pode transformar sua vida.',
         thumbnail: 'module1.jpg',
-        age_group: '5-7',
+        age_group: ["5-7"],
         user_id: user3.user_id,
       },
       {
@@ -138,7 +138,7 @@ async function main() {
         synopsis:
           'Aprenda técnicas práticas para estimular sua criatividade diariamente.',
         thumbnail: 'module2.jpg',
-        age_group: '8-10',
+        age_group: ["8-10"],
         user_id: user3.user_id,
       },
     ],

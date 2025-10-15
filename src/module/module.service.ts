@@ -18,7 +18,7 @@ interface RandomModuleResult {
   title: string;
   synopsis: string;
   thumbnail: string;
-  age_group: string[]; // text[] in DB
+  age_group: string[]; 
 }
 
 @Injectable()
@@ -36,12 +36,14 @@ export class ModuleService {
       throw new BadRequestException(`User with ID ${userId} does not exist`);
     }
 
+    console.log(createModuleDto)
+
     const mod = await this.prisma.module.create({
       data: {
         title: createModuleDto.title,
         synopsis: createModuleDto.synopsis,
         thumbnail: createModuleDto.thumbnail,
-        age_group: createModuleDto.age_group, // string[]
+        age_group: createModuleDto.age_group, 
         user_id: userId,
       },
     });
